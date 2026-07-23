@@ -1,0 +1,54 @@
+.ksqld-config {
+  max-width: 880px;
+  margin: 16px auto;
+  padding: 0 12px;
+  font-family: "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+  color: #2d2d2d;
+}
+.ksqld-title { font-size: 20px; margin: 8px 0 16px; }
+.ksqld-subtitle { font-size: 16px; margin: 8px 0; }
+.ksqld-section { margin-bottom: 24px; }
+.ksqld-label { display: block; font-weight: bold; font-size: 13px; margin: 8px 0 4px; }
+.ksqld-label-inline { display: inline-flex; flex-direction: column; font-size: 12px; margin-right: 12px; }
+.ksqld-hint { font-size: 12px; color: #888; margin: 4px 0 0; }
+
+.ksqld-select, .ksqld-input, .ksqld-textarea {
+  border: 1px solid #c9c9c9;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+.ksqld-input { width: 100%; }
+.ksqld-textarea { width: 100%; font-family: Consolas, "Courier New", monospace; }
+
+.ksqld-panes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ksqld-pane-card {
+  border: 1px solid #e3e3e3;
+  border-radius: 6px;
+  padding: 12px;
+  background: #fafafa;
+}
+.ksqld-pane-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.ksqld-pane-index {
+  flex: 0 0 auto;
+  width: 24px; height: 24px; line-height: 24px; text-align: center;
+  background: #3498db; color: #fff; border-radius: 50%; font-size: 12px; font-weight: bold;
+}
+.ksqld-pane-title { flex: 1 1 auto; }
+.ksqld-chart-cols { margin-top: 8px; }
+
+.ksqld-actions { display: flex; align-items: center; gap: 12px; margin: 8px 0 40px; }
+.ksqld-btn {
+  border: 1px solid #c9c9c9; background: #fff; color: #333;
+  border-radius: 4px; padding: 8px 20px; font-size: 13px; cursor: pointer;
+}
+.ksqld-btn-primary { background: #3498db; border-color: #3498db; color: #fff; }
+.ksqld-btn:hover { opacity: 0.9; }
+.ksqld-message { font-size: 13px; }
+.ksqld-message.ok { color: #27ae60; }
+.ksqld-message.error { color: #e74c3c; }
+
+@media (max-width: 640px) {
+  .ksqld-panes { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,14 @@
+# kintone plugin packer 生成物
+*.zip
+*.ppk
+
+# 依存
+node_modules/
+
+# B66 実物 UMD（差し替え時に配置・サンプルのプレースホルダのみコミット）
+# js/ksql-engine.umd.js は差し替え後もプレースホルダを履歴に残すためコミット対象
+
+# OS / エディタ
+.DS_Store
+Thumbs.db
+*.log

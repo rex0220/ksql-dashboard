@@ -1,0 +1,53 @@
+<div id="ksqld-config" class="ksqld-config">
+  <h2 class="ksqld-title">kSQL Dashboard 設定</h2>
+
+  <section class="ksqld-section">
+    <label class="ksqld-label" for="ksqld-split">画面分割数</label>
+    <select id="ksqld-split" class="ksqld-select">
+      <option value="1">1 分割（単一）</option>
+      <option value="2">2 分割（横2）</option>
+      <option value="3">3 分割（横3）</option>
+      <option value="4">4 分割（2×2）</option>
+    </select>
+    <p class="ksqld-hint">分割数に応じて、下の「ペイン一覧」の数が変わります。</p>
+  </section>
+
+  <section class="ksqld-section">
+    <h3 class="ksqld-subtitle">ペイン一覧</h3>
+    <div id="ksqld-panes" class="ksqld-panes"><!-- config.js が生成 --></div>
+  </section>
+
+  <div class="ksqld-actions">
+    <button id="ksqld-save" class="ksqld-btn ksqld-btn-primary" type="button">保存</button>
+    <button id="ksqld-cancel" class="ksqld-btn" type="button">キャンセル</button>
+    <span id="ksqld-message" class="ksqld-message" role="status"></span>
+  </div>
+</div>
+
+<!-- ペイン設定のテンプレート -->
+<template id="ksqld-pane-template">
+  <div class="ksqld-pane-card">
+    <div class="ksqld-pane-head">
+      <span class="ksqld-pane-index"></span>
+      <input type="text" class="ksqld-input ksqld-pane-title" placeholder="ペインのタイトル" />
+    </div>
+    <label class="ksqld-label">SQL</label>
+    <textarea class="ksqld-textarea ksqld-pane-sql" rows="4"
+      placeholder="SELECT 担当, COUNT(*) AS 件数 FROM APP100 GROUP BY 担当"></textarea>
+    <div class="ksqld-pane-display">
+      <label class="ksqld-label">表示方法</label>
+      <select class="ksqld-select ksqld-pane-type">
+        <option value="table">表</option>
+        <option value="chart">グラフ（棒）</option>
+      </select>
+      <div class="ksqld-chart-cols" hidden>
+        <label class="ksqld-label-inline">ラベル列
+          <input type="text" class="ksqld-input ksqld-pane-label-col" placeholder="担当" />
+        </label>
+        <label class="ksqld-label-inline">値列
+          <input type="text" class="ksqld-input ksqld-pane-value-col" placeholder="件数" />
+        </label>
+      </div>
+    </div>
+  </div>
+</template>

@@ -1,0 +1,37 @@
+{
+  "manifest_version": 1,
+  "version": 1,
+  "type": "APP",
+  "name": {
+    "ja": "kSQL Dashboard",
+    "en": "kSQL Dashboard"
+  },
+  "description": {
+    "ja": "kSQL で取得したデータを、1〜4分割の画面に表・グラフで表示するダッシュボードプラグイン。",
+    "en": "Dashboard plugin that renders kSQL query results as tables/charts in a 1-4 pane layout."
+  },
+  "icon": "image/icon.png",
+  "homepage_url": {
+    "ja": "https://github.com/rex0220/kintone-sql-tools",
+    "en": "https://github.com/rex0220/kintone-sql-tools"
+  },
+  "desktop": {
+    "js": [
+      "js/ksql-engine.umd.js",
+      "js/desktop.js"
+    ],
+    "css": [
+      "css/desktop.css"
+    ]
+  },
+  "config": {
+    "html": "html/config.html",
+    "js": [
+      "js/config.js"
+    ],
+    "css": [
+      "css/config.css"
+    ],
+    "required_params": []
+  }
+}

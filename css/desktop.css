@@ -1,0 +1,44 @@
+.ksqld-dashboard {
+  margin: 12px 0;
+  font-family: "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+}
+.ksqld-grid {
+  display: grid;
+  gap: 12px;
+}
+.ksqld-grid[data-split="1"] { grid-template-columns: 1fr; }
+.ksqld-grid[data-split="2"] { grid-template-columns: 1fr 1fr; }
+.ksqld-grid[data-split="3"] { grid-template-columns: 1fr 1fr 1fr; }
+.ksqld-grid[data-split="4"] { grid-template-columns: 1fr 1fr; }
+
+.ksqld-tile {
+  border: 1px solid #e3e3e3;
+  border-radius: 6px;
+  background: #fff;
+  padding: 12px;
+  min-height: 160px;
+  overflow: auto;
+}
+.ksqld-tile-title { font-size: 14px; font-weight: bold; margin: 0 0 8px; color: #2d2d2d; }
+.ksqld-tile-body { font-size: 13px; }
+
+.ksqld-table { border-collapse: collapse; width: 100%; }
+.ksqld-table th, .ksqld-table td {
+  border: 1px solid #e3e3e3; padding: 4px 8px; text-align: left; white-space: nowrap;
+}
+.ksqld-table th { background: #f5f5f5; position: sticky; top: 0; }
+
+.ksqld-bar-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 12px; }
+.ksqld-bar-label { flex: 0 0 120px; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ksqld-bar-track { flex: 1 1 auto; background: #eef3f8; border-radius: 3px; height: 16px; }
+.ksqld-bar-fill { background: #3498db; height: 16px; border-radius: 3px; }
+.ksqld-bar-value { flex: 0 0 64px; }
+
+.ksqld-note { color: #888; font-size: 12px; }
+.ksqld-error { color: #e74c3c; font-size: 12px; white-space: pre-wrap; }
+
+@media (max-width: 760px) {
+  .ksqld-grid[data-split="2"],
+  .ksqld-grid[data-split="3"],
+  .ksqld-grid[data-split="4"] { grid-template-columns: 1fr; }
+}
