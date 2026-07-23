@@ -16,5 +16,7 @@ kintone プラグイン（サンプル）。レコード一覧画面に、kSQL(r
 
 ## パッケージ化
 ```sh
-npx @kintone/plugin-packer . --out ksql-dashboard.zip
+# 成果物は dist/ 配下（dist/*.zip・dist/*.ppk は .gitignore 済み）
+npx @kintone/plugin-packer . --out dist/ksql-dashboard.zip
+# 2回目以降は plugin ID 固定のため: --ppk dist/<plugin-id>.ppk を付ける
 ```

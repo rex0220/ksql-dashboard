@@ -1,4 +1,5 @@
-# kintone plugin packer 生成物
+# kintone plugin packer 生成物（成果物は dist/ 配下に出力する）
+dist/
 *.zip
 *.ppk
 

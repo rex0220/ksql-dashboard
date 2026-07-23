@@ -104,11 +104,13 @@ ExplainResult = { type: "explain", lines: string[], text: string, metrics }
 ## 5. 開発の進め方
 
 - **動作確認**: プレースホルダがサンプルデータ（区分/件数/金額）を返すので、設定→レイアウト→表/グラフ描画を実 kintone で確認できる。グラフ確認は `labelColumn=区分`, `valueColumn=件数` を設定。
-- **パッケージ化**:
+- **パッケージ化**（成果物は `dist/` 配下に出力する）:
   ```sh
-  npx @kintone/plugin-packer . --out ksql-dashboard.zip
+  npx @kintone/plugin-packer . --out dist/ksql-dashboard.zip
+  # 初回は dist/<plugin-id>.ppk が生成される。2 回目以降は plugin ID を固定するため既存キーを指定:
+  #   npx @kintone/plugin-packer . --out dist/ksql-dashboard.zip --ppk dist/<plugin-id>.ppk
   ```
-  `*.zip` と秘密鍵 `*.ppk` は `.gitignore` 済み（コミットしない）。**`.ppk` は再アップデートに必要なので安全に保管**。
+  `*.zip` と秘密鍵 `*.ppk` は（`dist/` 配下でも）`.gitignore` 済み（コミットしない）。**`.ppk` は再アップデートに必要なので安全に保管**。`--ppk` を付けずに再実行すると毎回別の plugin ID の鍵が生成される点に注意。
 - **git**: このフォルダは独立 git リポジトリ。変更はここでコミットする（親 kintone-sql-tools とは別）。
 
 ## 6. 次の作業候補（TODO・優先度順の目安）
@@ -133,5 +135,5 @@ ExplainResult = { type: "explain", lines: string[], text: string, metrics }
 
 - [ ] `git log --oneline` で現状コミットを確認。
 - [ ] `manifest.json` の参照ファイルが全て存在するか（`node -e` や find で確認）。
-- [ ] 変更後 `npx @kintone/plugin-packer . --out ksql-dashboard.zip` が成功するか。
+- [ ] 変更後 `npx @kintone/plugin-packer . --out dist/ksql-dashboard.zip` が成功するか。
 - [ ] `desktop.js` が B66 API 契約（§3）から外れていないか（実物差し替え時に壊れないため）。

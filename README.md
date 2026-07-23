@@ -57,8 +57,11 @@ ksql-dashboard/
 kintone プラグインパッカーで zip 化する。
 
 ```sh
-npx @kintone/plugin-packer ksql-dashboard --out ksql-dashboard.zip
-# 秘密鍵 ksql-dashboard.ppk が生成される（次回以降のアップデートで使用）
+# 成果物は dist/ 配下に出力する（dist/*.zip・dist/*.ppk は .gitignore 済み）
+npx @kintone/plugin-packer . --out dist/ksql-dashboard.zip
+# 初回は dist/<plugin-id>.ppk（秘密鍵）が生成される。
+# 2 回目以降は同じ plugin ID を維持するため既存の .ppk を指定する:
+#   npx @kintone/plugin-packer . --out dist/ksql-dashboard.zip --ppk dist/<plugin-id>.ppk
 ```
 
 ## 設定データ構造（getConfig / setConfig）
