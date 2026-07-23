@@ -54,15 +54,29 @@ ksql-dashboard/
 
 ## パッケージ化
 
-kintone プラグインパッカーで zip 化する。
+kintone 標準 CLI（`cli-kintone`）で zip 化する。成果物は `dist/` 配下に出力する（`dist/` は `.gitignore` 済み）。
 
 ```sh
-# 成果物は dist/ 配下に出力する（dist/*.zip・dist/*.ppk は .gitignore 済み）
-npx @kintone/plugin-packer . --out dist/ksql-dashboard.zip
-# 初回は dist/<plugin-id>.ppk（秘密鍵）が生成される。
-# 2 回目以降は同じ plugin ID を維持するため既存の .ppk を指定する:
-#   npx @kintone/plugin-packer . --out dist/ksql-dashboard.zip --ppk dist/<plugin-id>.ppk
+npm run package
 ```
+
+`scripts/package.js` が以下を実行する:
+
+1. 秘密鍵 `dist/ksql-dashboard.ppk` が無ければ `cli-kintone plugin keygen` で生成
+2. `cli-kintone plugin pack` で `dist/ksql-dashboard.zip` を作成（`--private-key` を常に同じ鍵で指定するため **plugin ID は固定**）
+
+同等の生 CLI コマンド:
+
+```sh
+npx cli-kintone plugin keygen --output dist/ksql-dashboard.ppk
+npx cli-kintone plugin pack \
+  --input manifest.json \
+  --output dist/ksql-dashboard.zip \
+  --private-key dist/ksql-dashboard.ppk
+```
+
+- 鍵を作り直す（plugin ID を変える）場合は `npm run package -- --new`。
+- **`.ppk` は再アップデートに必要**。安全に保管すること（`.gitignore` 済みでコミットされない）。
 
 ## 設定データ構造（getConfig / setConfig）
 

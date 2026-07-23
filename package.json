@@ -1,0 +1,9 @@
+{
+  "name": "ksql-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "kintone プラグイン: kSQL(read-only) の結果を 1〜4 分割ダッシュボードで表示する。",
+  "scripts": {
+    "package": "node scripts/package.js"
+  }
+}

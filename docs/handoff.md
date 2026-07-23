@@ -104,13 +104,16 @@ ExplainResult = { type: "explain", lines: string[], text: string, metrics }
 ## 5. 開発の進め方
 
 - **動作確認**: プレースホルダがサンプルデータ（区分/件数/金額）を返すので、設定→レイアウト→表/グラフ描画を実 kintone で確認できる。グラフ確認は `labelColumn=区分`, `valueColumn=件数` を設定。
-- **パッケージ化**（成果物は `dist/` 配下に出力する）:
+- **パッケージ化**（kintone 標準 `cli-kintone` を使用。成果物は `dist/` 配下）:
   ```sh
-  npx @kintone/plugin-packer . --out dist/ksql-dashboard.zip
-  # 初回は dist/<plugin-id>.ppk が生成される。2 回目以降は plugin ID を固定するため既存キーを指定:
-  #   npx @kintone/plugin-packer . --out dist/ksql-dashboard.zip --ppk dist/<plugin-id>.ppk
+  npm run package        # scripts/package.js: 鍵が無ければ keygen → plugin pack で dist/ksql-dashboard.zip
   ```
-  `*.zip` と秘密鍵 `*.ppk` は（`dist/` 配下でも）`.gitignore` 済み（コミットしない）。**`.ppk` は再アップデートに必要なので安全に保管**。`--ppk` を付けずに再実行すると毎回別の plugin ID の鍵が生成される点に注意。
+  生 CLI で行う場合:
+  ```sh
+  npx cli-kintone plugin keygen --output dist/ksql-dashboard.ppk   # 初回のみ
+  npx cli-kintone plugin pack -i manifest.json -o dist/ksql-dashboard.zip --private-key dist/ksql-dashboard.ppk
+  ```
+  `--private-key` を常に同じ鍵で指定するため **plugin ID は固定**される（旧 `@kintone/plugin-packer` は鍵未指定だと毎回 ID が変わったが、`cli-kintone` は `--private-key` 必須）。`dist/`（`*.zip`/`*.ppk`）は `.gitignore` 済み（コミットしない）。**`.ppk` は再アップデートに必要なので安全に保管**。鍵を作り直す場合は `npm run package -- --new`。
 - **git**: このフォルダは独立 git リポジトリ。変更はここでコミットする（親 kintone-sql-tools とは別）。
 
 ## 6. 次の作業候補（TODO・優先度順の目安）
@@ -135,5 +138,5 @@ ExplainResult = { type: "explain", lines: string[], text: string, metrics }
 
 - [ ] `git log --oneline` で現状コミットを確認。
 - [ ] `manifest.json` の参照ファイルが全て存在するか（`node -e` や find で確認）。
-- [ ] 変更後 `npx @kintone/plugin-packer . --out dist/ksql-dashboard.zip` が成功するか。
+- [ ] 変更後 `npm run package`（cli-kintone plugin pack）が成功するか。
 - [ ] `desktop.js` が B66 API 契約（§3）から外れていないか（実物差し替え時に壊れないため）。

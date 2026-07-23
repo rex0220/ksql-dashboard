@@ -15,8 +15,10 @@ kintone プラグイン（サンプル）。レコード一覧画面に、kSQL(r
 - 独立 git リポジトリ。`*.zip`/`*.ppk`/`node_modules` は `.gitignore` 済み。
 
 ## パッケージ化
+kintone 標準 CLI（`cli-kintone`）を使う。成果物は `dist/` 配下（`.gitignore` 済み）。
 ```sh
-# 成果物は dist/ 配下（dist/*.zip・dist/*.ppk は .gitignore 済み）
-npx @kintone/plugin-packer . --out dist/ksql-dashboard.zip
-# 2回目以降は plugin ID 固定のため: --ppk dist/<plugin-id>.ppk を付ける
+npm run package        # scripts/package.js: keygen(初回) → plugin pack
+# 生 CLI: npx cli-kintone plugin pack -i manifest.json -o dist/ksql-dashboard.zip --private-key dist/ksql-dashboard.ppk
+# 鍵を作り直す（plugin ID を変える）: npm run package -- --new
 ```
+`--private-key` を常に同じ鍵で指定するため plugin ID は固定される。`dist/ksql-dashboard.ppk` は再アップデートに必要なので保管する。
