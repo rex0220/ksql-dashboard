@@ -6,6 +6,8 @@
   "use strict";
 
   var MAX_PANES = 4;
+  // desktop.js と同じく UMD レジストリから明示バージョンで取得する
+  var KSQL_VERSION = "3.19.0";
 
   var $split = document.getElementById("ksqld-split");
   var $panes = document.getElementById("ksqld-panes");
@@ -23,6 +25,58 @@
   if (!Array.isArray(config.panes)) { config.panes = []; }
   if (["1", "2", "3", "4"].indexOf(String(config.split)) === -1) { config.split = "1"; }
 
+  // kSQL エンジンの取得（config 画面にも UMD を読み込み済み・未読込なら null）
+  function getEngine() {
+    if (window.ksql && typeof window.ksql.get === "function") {
+      return window.ksql.get(KSQL_VERSION) || null;
+    }
+    return null;
+  }
+
+  // 検証結果の表示（ステータス行＋EXPLAIN/警告の詳細）
+  function setValidateResult($status, $plan, text, kind, detail) {
+    $status.textContent = text;
+    $status.className = "ksqld-validate-result" + (kind ? " " + kind : "");
+    if (detail) {
+      $plan.textContent = detail;
+      $plan.hidden = false;
+    } else {
+      $plan.textContent = "";
+      $plan.hidden = true;
+    }
+  }
+
+  // 保存前の SQL 検証（explainQuery で実行前チェック・データ取得はしない）
+  function validateSql(card) {
+    var $status = card.querySelector(".ksqld-validate-result");
+    var $plan = card.querySelector(".ksqld-validate-plan");
+    var $button = card.querySelector(".ksqld-validate");
+    var sql = card.querySelector(".ksqld-pane-sql").value.trim();
+
+    if (!sql) { setValidateResult($status, $plan, "SQL が未入力です。", "error"); return; }
+    var engine = getEngine();
+    if (!engine) {
+      setValidateResult($status, $plan, "kSQL エンジン未読込のため検証できません。", "note");
+      return;
+    }
+
+    $button.disabled = true;
+    setValidateResult($status, $plan, "検証中…", "note");
+    var client = engine.createReadonlyKintoneClient();
+    engine.explainQuery(sql, { client: client })
+      .then(function (plan) {
+        var detail = plan && plan.text ? plan.text
+          : (plan && plan.lines ? plan.lines.join("\n") : "");
+        setValidateResult($status, $plan, "OK: 実行可能な SQL です。", "ok", detail);
+      })
+      .catch(function (err) {
+        var code = (err && err.code) ? "[" + err.code + "] " : "";
+        var msg = (err && err.message) ? err.message : "検証エラー";
+        setValidateResult($status, $plan, code + msg, "error");
+      })
+      .then(function () { $button.disabled = false; });
+  }
+
   // 1枚のペイン設定フォームを生成
   function buildPaneCard(index, pane) {
     var node = $template.content.cloneNode(true);
@@ -39,6 +93,10 @@
     function toggleChartCols() { $chartCols.hidden = $type.value !== "chart"; }
     $type.addEventListener("change", toggleChartCols);
     toggleChartCols();
+
+    card.querySelector(".ksqld-validate").addEventListener("click", function () {
+      validateSql(card);
+    });
 
     return card;
   }

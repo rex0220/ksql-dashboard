@@ -27,6 +27,7 @@
   "config": {
     "html": "html/config.html",
     "js": [
+      "js/ksql-engine.umd.js",
       "js/config.js"
     ],
     "css": [

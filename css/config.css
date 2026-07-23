@@ -38,6 +38,19 @@
 .ksqld-pane-title { flex: 1 1 auto; }
 .ksqld-chart-cols { margin-top: 8px; }
 
+.ksqld-pane-validate { display: flex; align-items: center; gap: 8px; margin: 8px 0 4px; }
+.ksqld-btn-sub { padding: 4px 12px; font-size: 12px; }
+.ksqld-validate-result { font-size: 12px; }
+.ksqld-validate-result.ok { color: #27ae60; }
+.ksqld-validate-result.error { color: #e74c3c; }
+.ksqld-validate-result.note { color: #888; }
+.ksqld-validate-plan {
+  margin: 0 0 4px; padding: 6px 8px;
+  background: #f0f0f0; border: 1px solid #e0e0e0; border-radius: 4px;
+  font-family: Consolas, "Courier New", monospace; font-size: 11px;
+  white-space: pre-wrap; word-break: break-word; max-height: 120px; overflow: auto;
+}
+
 .ksqld-actions { display: flex; align-items: center; gap: 12px; margin: 8px 0 40px; }
 .ksqld-btn {
   border: 1px solid #c9c9c9; background: #fff; color: #333;

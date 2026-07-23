@@ -34,6 +34,11 @@
     <label class="ksqld-label">SQL</label>
     <textarea class="ksqld-textarea ksqld-pane-sql" rows="4"
       placeholder="SELECT 担当, COUNT(*) AS 件数 FROM APP100 GROUP BY 担当"></textarea>
+    <div class="ksqld-pane-validate">
+      <button type="button" class="ksqld-btn ksqld-btn-sub ksqld-validate">検証</button>
+      <span class="ksqld-validate-result" role="status"></span>
+    </div>
+    <pre class="ksqld-validate-plan" hidden></pre>
     <div class="ksqld-pane-display">
       <label class="ksqld-label">表示方法</label>
       <select class="ksqld-select ksqld-pane-type">
