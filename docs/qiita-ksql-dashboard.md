@@ -12,7 +12,7 @@ kSQL Dashboard は、kintone のレコード一覧画面に **kSQL（read-only �
 
 > kSQL 本体（アプリを SQL ライクに操作するプラグイン）については別記事を参照してください。本記事はその **エンジンを使った可視化プラグイン** の紹介です。
 
-![2026-07-24_20h45_11.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/100572/ab73b6ac-ed02-4f06-875c-b9b79d1ff7c5.png)
+![2026-07-25_01h43_56.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/100572/d8349afb-d342-4f35-9cc9-4d0b587f8638.png)
 
 ---
 
@@ -184,7 +184,7 @@ ORDER BY 金額 DESC
 - **「再実行」**でデータを取り直せます。SQL を直したらもう一度実行して確認できます。
 - 表示されるのは**今編集しているペインの内容**です。まだ保存していない変更もそのまま反映されます。
 
-![2026-07-24_23h23_44.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/100572/fc4acc5b-a7e4-429b-a604-d634511d45fb.png)
+![2026-07-25_01h43_16.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/100572/d9015174-f5e3-439d-8fb4-85717f6f6566.png)
 
 ---
 
