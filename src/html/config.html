@@ -3,16 +3,16 @@
     <div class="ksqld-toolbar-top">
       <h2 class="ksqld-title">kSQL Dashboard 設定</h2>
       <div class="ksqld-toolbar-actions">
-        <button id="ksqld-save" class="ksqld-btn ksqld-btn-primary" type="button">保存</button>
-        <button id="ksqld-cancel" class="ksqld-btn" type="button">キャンセル</button>
+        <button id="ksqld-save" class="kintoneplugin-button-dialog-ok" type="button">保存</button>
+        <button id="ksqld-cancel" class="kintoneplugin-button-dialog-cancel" type="button">キャンセル</button>
         <label class="ksqld-deploy ksqld-toolbar-deploy" title="オフの場合は設定の保存のみ。反映には別途アプリの更新が必要です。">
           <input type="checkbox" id="ksqld-deploy" />
           運用環境に反映
         </label>
-        <button id="ksqld-preview-open" class="ksqld-btn ksqld-icon-btn" type="button" title="編集中のダッシュボードをプレビュー">
+        <button id="ksqld-preview-open" class="kintoneplugin-button-normal ksqld-icon-btn" type="button" title="編集中のダッシュボードをプレビュー">
           <svg class="ksqld-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 3C4.7 3 1.9 5 .6 8c1.3 3 4.1 5 7.4 5s6.1-2 7.4-5C14.1 5 11.3 3 8 3zm0 8.4A3.4 3.4 0 1 1 8 4.6a3.4 3.4 0 0 1 0 6.8zM8 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg>プレビュー
         </button>
-        <button id="ksqld-tools-open" class="ksqld-btn ksqld-icon-btn" type="button" title="複写・入れ替えツール" aria-label="複写・入れ替えツール">
+        <button id="ksqld-tools-open" class="kintoneplugin-button-normal ksqld-icon-btn" type="button" title="複写・入れ替えツール" aria-label="複写・入れ替えツール">
           <svg class="ksqld-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M9.4 1l.4 1.8a5.4 5.4 0 0 1 1.4.8l1.7-.6 1.4 2.4-1.4 1.2a5.5 5.5 0 0 1 0 1.7l1.4 1.2-1.4 2.4-1.7-.6a5.4 5.4 0 0 1-1.4.8L9.4 15H6.6l-.4-1.8a5.4 5.4 0 0 1-1.4-.8l-1.7.6-1.4-2.4 1.4-1.2a5.5 5.5 0 0 1 0-1.7L1.7 6.4l1.4-2.4 1.7.6a5.4 5.4 0 0 1 1.4-.8L6.6 1h2.8zM8 5.5A2.5 2.5 0 1 0 8 10.5 2.5 2.5 0 0 0 8 5.5z"/></svg>ツール
         </button>
         <span id="ksqld-dirty-badge" class="ksqld-dirty-badge" hidden>未保存の変更があります</span>
@@ -23,9 +23,13 @@
     <div class="ksqld-toolbar-controls">
       <div class="ksqld-field">
         <label class="ksqld-label" for="ksqld-view">対象の一覧（ビュー）</label>
-        <select id="ksqld-view" class="ksqld-select">
-          <option value="__default__">すべての一覧（共通）</option>
-        </select>
+        <div class="kintoneplugin-select-outer">
+          <div class="kintoneplugin-select">
+            <select id="ksqld-view">
+              <option value="__default__">すべての一覧（共通）</option>
+            </select>
+          </div>
+        </div>
       </div>
       <label class="ksqld-deploy ksqld-enabled-label">
         <input type="checkbox" id="ksqld-enabled" />
@@ -33,10 +37,14 @@
       </label>
       <div class="ksqld-field" id="ksqld-source-row" hidden>
         <label class="ksqld-label" for="ksqld-source">表示するダッシュボード</label>
-        <select id="ksqld-source" class="ksqld-select">
-          <option value="common">共通（すべての一覧）</option>
-          <option value="individual">個別（この一覧専用）</option>
-        </select>
+        <div class="kintoneplugin-select-outer">
+          <div class="kintoneplugin-select">
+            <select id="ksqld-source">
+              <option value="common">共通（すべての一覧）</option>
+              <option value="individual">個別（この一覧専用）</option>
+            </select>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -48,16 +56,20 @@
     <section class="ksqld-section">
       <div class="ksqld-dash-opts">
         <label class="ksqld-label-inline">画面分割数
-          <select id="ksqld-split" class="ksqld-select">
-            <option value="1">1 分割（単一）</option>
-            <option value="2">2 分割（横2）</option>
-            <option value="3">3 分割（上2・下1）</option>
-            <option value="3b">3 分割（上1・下2）</option>
-            <option value="4">4 分割（2×2）</option>
-          </select>
+          <span class="kintoneplugin-select-outer">
+            <span class="kintoneplugin-select">
+              <select id="ksqld-split">
+                <option value="1">1 分割（単一）</option>
+                <option value="2">2 分割（横2）</option>
+                <option value="3">3 分割（上2・下1）</option>
+                <option value="3b">3 分割（上1・下2）</option>
+                <option value="4">4 分割（2×2）</option>
+              </select>
+            </span>
+          </span>
         </label>
         <label class="ksqld-label-inline">自動更新（分・0で無効）
-          <input type="number" min="0" step="10" id="ksqld-refresh" class="ksqld-input ksqld-refresh-input" placeholder="0" />
+          <input type="number" min="0" step="10" id="ksqld-refresh" class="kintoneplugin-input-text ksqld-input ksqld-refresh-input" placeholder="0" />
         </label>
       </div>
       <p class="ksqld-hint">分割数に応じて、下の「ペイン一覧」の数が変わります。自動更新は一覧画面で一定間隔ごとに再取得します（最短10分・10分単位。0で無効）。</p>
@@ -75,17 +87,25 @@
     <div class="ksqld-modal-box" role="dialog" aria-modal="true" aria-label="複写・入れ替えツール">
       <div class="ksqld-modal-head">
         <h3 class="ksqld-modal-title">複写・入れ替え</h3>
-        <button id="ksqld-tools-close" class="ksqld-btn" type="button">閉じる</button>
+        <button id="ksqld-tools-close" class="kintoneplugin-button-normal ksqld-btn-sub" type="button">閉じる</button>
       </div>
 
       <section class="ksqld-modal-sec">
         <h4 class="ksqld-modal-subtitle">ペインの複写・入れ替え（この一覧内）</h4>
         <div class="ksqld-modal-row">
           <label class="ksqld-label-inline">元ペイン
-            <select id="ksqld-op-src" class="ksqld-select"></select>
+            <span class="kintoneplugin-select-outer">
+              <span class="kintoneplugin-select">
+                <select id="ksqld-op-src"></select>
+              </span>
+            </span>
           </label>
           <label class="ksqld-label-inline">対象ペイン
-            <select id="ksqld-op-dst" class="ksqld-select"></select>
+            <span class="kintoneplugin-select-outer">
+              <span class="kintoneplugin-select">
+                <select id="ksqld-op-dst"></select>
+              </span>
+            </span>
           </label>
           <button id="ksqld-op-copy" class="ksqld-btn ksqld-btn-caution" type="button">複写（元→対象）</button>
           <button id="ksqld-op-swap" class="ksqld-btn ksqld-btn-caution" type="button">入れ替え</button>
@@ -98,7 +118,11 @@
         <div class="ksqld-modal-row">
           <span>今の一覧「<strong id="ksqld-op-curview"></strong>」の設定を</span>
           <label class="ksqld-label-inline">複写先
-            <select id="ksqld-copy-target" class="ksqld-select"></select>
+            <span class="kintoneplugin-select-outer">
+              <span class="kintoneplugin-select">
+                <select id="ksqld-copy-target"></select>
+              </span>
+            </span>
           </label>
           <button id="ksqld-copy-view" class="ksqld-btn ksqld-btn-caution" type="button">複写</button>
         </div>
@@ -108,7 +132,7 @@
       <section class="ksqld-modal-sec">
         <h4 class="ksqld-modal-subtitle">設定のバックアップ（ダウンロード／アップロード）</h4>
         <div class="ksqld-modal-row">
-          <button id="ksqld-download" class="ksqld-btn" type="button">ダウンロード</button>
+          <button id="ksqld-download" class="kintoneplugin-button-normal ksqld-btn-sub" type="button">ダウンロード</button>
           <button id="ksqld-upload" class="ksqld-btn ksqld-btn-caution" type="button">アップロード（読込）</button>
           <input type="file" id="ksqld-import-file" accept="application/json,.json" hidden />
         </div>
@@ -125,8 +149,8 @@
       <div class="ksqld-modal-head">
         <h3 class="ksqld-modal-title">プレビュー（編集中のダッシュボード）</h3>
         <div>
-          <button id="ksqld-preview-reload" class="ksqld-btn ksqld-btn-sub" type="button">再実行</button>
-          <button id="ksqld-preview-close" class="ksqld-btn" type="button">閉じる</button>
+          <button id="ksqld-preview-reload" class="kintoneplugin-button-normal ksqld-btn-sub" type="button">再実行</button>
+          <button id="ksqld-preview-close" class="kintoneplugin-button-normal ksqld-btn-sub" type="button">閉じる</button>
         </div>
       </div>
       <p class="ksqld-hint">実際のアプリのデータで表示します（保存前の確認用）。SQL エラーは各ペインに表示されます。</p>
@@ -142,14 +166,14 @@
       <div class="ksqld-pane-sql-col">
         <div class="ksqld-pane-head">
           <label class="ksqld-label">ペイン名（タブに表示されます）
-            <input type="text" class="ksqld-input ksqld-pane-title" placeholder="例: 顧客別 集計" />
+            <input type="text" class="kintoneplugin-input-text ksqld-input ksqld-pane-title" placeholder="例: 顧客別 集計" />
           </label>
         </div>
         <label class="ksqld-label">SQL</label>
         <textarea class="ksqld-textarea ksqld-pane-sql" rows="8"
           placeholder="SELECT 担当, COUNT(*) AS 件数 FROM APP100 GROUP BY 担当"></textarea>
         <div class="ksqld-pane-validate">
-          <button type="button" class="ksqld-btn ksqld-btn-sub ksqld-validate">検証</button>
+          <button type="button" class="kintoneplugin-button-normal ksqld-btn-sub ksqld-validate">検証</button>
           <span class="ksqld-validate-result" role="status"></span>
         </div>
         <pre class="ksqld-validate-plan" hidden></pre>
@@ -159,28 +183,36 @@
         <div class="ksqld-pane-display">
           <div class="ksqld-pane-display-row">
             <label class="ksqld-label-inline">表示方法
-              <select class="ksqld-select ksqld-pane-type">
-                <option value="table">表</option>
-                <option value="chart">グラフ（棒）</option>
-              </select>
+              <span class="kintoneplugin-select-outer">
+                <span class="kintoneplugin-select">
+                  <select class="ksqld-pane-type">
+                    <option value="table">表</option>
+                    <option value="chart">グラフ（棒）</option>
+                  </select>
+                </span>
+              </span>
             </label>
             <label class="ksqld-label-inline ksqld-chart-type-wrap" hidden>グラフの向き
-              <select class="ksqld-select ksqld-pane-chart-type">
-                <option value="bar">横棒</option>
-                <option value="column">縦棒</option>
-              </select>
+              <span class="kintoneplugin-select-outer">
+                <span class="kintoneplugin-select">
+                  <select class="ksqld-pane-chart-type">
+                    <option value="bar">横棒</option>
+                    <option value="column">縦棒</option>
+                  </select>
+                </span>
+              </span>
             </label>
           </div>
           <div class="ksqld-chart-cols" hidden>
             <label class="ksqld-label-inline">ラベル列
-              <input type="text" class="ksqld-input ksqld-pane-label-col" placeholder="担当" />
+              <input type="text" class="kintoneplugin-input-text ksqld-input ksqld-pane-label-col" placeholder="担当" />
             </label>
             <label class="ksqld-label-inline">値列
-              <input type="text" class="ksqld-input ksqld-pane-value-col" placeholder="件数" />
+              <input type="text" class="kintoneplugin-input-text ksqld-input ksqld-pane-value-col" placeholder="件数" />
             </label>
           </div>
           <label class="ksqld-label-inline ksqld-pane-maxrecords-row">取得件数（未指定=500）
-            <input type="number" min="10" step="10" class="ksqld-input ksqld-pane-maxrecords" placeholder="500" />
+            <input type="number" min="10" step="10" class="kintoneplugin-input-text ksqld-input ksqld-pane-maxrecords" placeholder="500" />
           </label>
         </div>
       </div>

@@ -35,21 +35,35 @@
 .ksqld-label-inline { display: inline-flex; flex-direction: column; font-size: 12px; margin-right: 12px; }
 .ksqld-hint { font-size: 12px; color: #666; margin: 4px 0 0; }
 
-.ksqld-select, .ksqld-input, .ksqld-textarea {
-  border: 1px solid #c9c9c9;
-  border-radius: 4px;
+/* 入力・選択は kintone 標準部品（kintoneplugin-*）を使用。幅だけこちらで指定 */
+.ksqld-input { width: 100%; box-sizing: border-box; }
+/* SQL 欄（標準スタイルシートに textarea 部品が無いため自前。配色は標準に合わせる）
+   max-width で列幅を超えて広がらないように（区切り線を越えてハンドルが掴めなくなるのを防ぐ） */
+.ksqld-textarea {
+  border: 1px solid #e3e7e8;
   padding: 6px 8px;
   font-size: 13px;
   box-sizing: border-box;
+  width: 100%; max-width: 100%;
+  font-family: Consolas, "Courier New", monospace;
 }
-.ksqld-input { width: 100%; }
-/* max-width で列幅を超えて広がらないように（区切り線を越えてハンドルが掴めなくなるのを防ぐ） */
-.ksqld-textarea { width: 100%; max-width: 100%; font-family: Consolas, "Courier New", monospace; }
+.ksqld-textarea:focus { outline: none; background-color: #e2f2fe; }
+
+/* kintone 標準部品をこの画面の密度（コンパクト表示）に合わせて縮小 */
+.ksqld-config .kintoneplugin-button-dialog-ok,
+.ksqld-config .kintoneplugin-button-dialog-cancel,
+.ksqld-config .kintoneplugin-button-normal {
+  min-width: 0; height: 36px; line-height: 34px; padding: 0 20px; font-size: 13px;
+}
+.ksqld-config .ksqld-btn-sub { height: 30px; line-height: 28px; padding: 0 12px; font-size: 12px; }
+.ksqld-config .kintoneplugin-input-text { height: 36px; font-size: 13px; color: #333; }
+.ksqld-config .kintoneplugin-select { height: 36px; margin-right: 0; }
+.ksqld-config .kintoneplugin-select select { height: 36px; min-width: 0; font-size: 13px; }
 /* SQL 欄はドラッグで小さくしすぎないよう最小高さを確保 */
 .ksqld-pane-sql { min-height: 120px; }
 
 /* アイコン付きボタン（プレビュー・ツール） */
-.ksqld-icon-btn { padding: 6px 12px; font-size: 13px; }
+.ksqld-config .ksqld-icon-btn { padding: 0 12px; }
 .ksqld-icon { width: 14px; height: 14px; vertical-align: -2px; margin-right: 4px; }
 
 /* 注意色ボタン（複写・入れ替えなど上書きを伴う操作） */
@@ -115,8 +129,7 @@
 
 /* 上寄せ＋ボタンは自然サイズ固定（エラーが複数行でも検証ボタンが伸びない） */
 .ksqld-pane-validate { display: flex; align-items: flex-start; gap: 8px; margin: 8px 0 4px; }
-.ksqld-pane-validate .ksqld-btn { flex: 0 0 auto; align-self: flex-start; }
-.ksqld-btn-sub { padding: 4px 12px; font-size: 12px; }
+.ksqld-pane-validate .ksqld-validate { flex: 0 0 auto; align-self: flex-start; }
 .ksqld-validate-result { font-size: 12px; padding-top: 6px; }
 .ksqld-validate-result.ok { color: #27ae60; }
 .ksqld-validate-result.error { color: #e74c3c; }
@@ -134,11 +147,12 @@
 .ksqld-deploy { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
 .ksqld-deploy input { width: 16px; height: 16px; }
 
+/* 自前ボタン（注意色ボタン用のベース。通常ボタンは kintoneplugin-* を使用） */
 .ksqld-btn {
-  border: 1px solid #c9c9c9; background: #fff; color: #333;
-  border-radius: 4px; padding: 8px 20px; font-size: 13px; cursor: pointer;
+  box-sizing: border-box;
+  border: 1px solid #e3e7e8; background: #fff; color: #333;
+  height: 36px; padding: 0 20px; font-size: 13px; cursor: pointer;
 }
-.ksqld-btn-primary { background: #3498db; border-color: #3498db; color: #fff; }
 .ksqld-btn:hover { opacity: 0.9; }
 /* 未保存インジケータ（注意色ボタンと同系色） */
 .ksqld-dirty-badge {
