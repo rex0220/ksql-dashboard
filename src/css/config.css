@@ -1,6 +1,6 @@
 .ksqld-config {
   max-width: 1040px;
-  margin: 16px 0;      /* 中央寄せをやめて左寄せ */
+  margin: 0;      /* 中央寄せをやめて左寄せ */
   padding: 0 16px;
   font-family: "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
   color: #2d2d2d;
@@ -33,7 +33,7 @@
 .ksqld-section:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
 .ksqld-label { display: block; font-weight: bold; font-size: 13px; margin: 8px 0 4px; }
 .ksqld-label-inline { display: inline-flex; flex-direction: column; font-size: 12px; margin-right: 12px; }
-.ksqld-hint { font-size: 12px; color: #888; margin: 4px 0 0; }
+.ksqld-hint { font-size: 12px; color: #666; margin: 4px 0 0; }
 
 .ksqld-select, .ksqld-input, .ksqld-textarea {
   border: 1px solid #c9c9c9;
@@ -48,8 +48,9 @@
 /* SQL 欄はドラッグで小さくしすぎないよう最小高さを確保 */
 .ksqld-pane-sql { min-height: 120px; }
 
-/* 歯車（ツール）ボタン */
+/* アイコン付きボタン（プレビュー・ツール） */
 .ksqld-icon-btn { padding: 6px 12px; font-size: 13px; }
+.ksqld-icon { width: 14px; height: 14px; vertical-align: -2px; margin-right: 4px; }
 
 /* 注意色ボタン（複写・入れ替えなど上書きを伴う操作） */
 .ksqld-btn-caution { border-color: #e0b050; color: #8a6d3b; background: #fcf6e9; }
@@ -101,7 +102,8 @@
   padding: 12px;
   background: #fafafa;
 }
-.ksqld-pane-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.ksqld-pane-head { margin-bottom: 6px; }
+.ksqld-pane-head .ksqld-label { margin-top: 0; }
 /* ペイン内を2カラム（左=SQL / 右=表示設定）。区切り線あり。狭い時は縦積み。 */
 .ksqld-pane-body { display: flex; gap: 0; align-items: stretch; flex-wrap: wrap; }
 .ksqld-pane-sql-col { flex: 1 1 420px; min-width: 300px; padding-right: 24px; }
@@ -109,12 +111,6 @@
   flex: 1 1 260px; min-width: 240px;
   padding-left: 24px; border-left: 1px solid #d9d9d9;
 }
-.ksqld-pane-index {
-  flex: 0 0 auto;
-  width: 24px; height: 24px; line-height: 24px; text-align: center;
-  background: #3498db; color: #fff; border-radius: 50%; font-size: 12px; font-weight: bold;
-}
-.ksqld-pane-title { flex: 1 1 auto; }
 .ksqld-chart-cols { margin-top: 8px; }
 
 /* 上寄せ＋ボタンは自然サイズ固定（エラーが複数行でも検証ボタンが伸びない） */
@@ -124,7 +120,7 @@
 .ksqld-validate-result { font-size: 12px; padding-top: 6px; }
 .ksqld-validate-result.ok { color: #27ae60; }
 .ksqld-validate-result.error { color: #e74c3c; }
-.ksqld-validate-result.note { color: #888; }
+.ksqld-validate-result.note { color: #666; }
 .ksqld-validate-plan {
   margin: 0 0 4px; padding: 6px 8px;
   background: #f0f0f0; border: 1px solid #e0e0e0; border-radius: 4px;

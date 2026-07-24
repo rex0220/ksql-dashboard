@@ -261,11 +261,10 @@
 
   function getCards() { return $panes.querySelectorAll(".ksqld-pane-card"); }
 
-  // 1枚のペイン設定フォームを生成
-  function buildPaneCard(index, pane) {
+  // 1枚のペイン設定フォームを生成（ペイン番号はタブ側にのみ表示する）
+  function buildPaneCard(pane) {
     var node = $template.content.cloneNode(true);
     var card = node.querySelector(".ksqld-pane-card");
-    card.querySelector(".ksqld-pane-index").textContent = String(index + 1);
     applyPaneToCard(card, pane);
 
     card.querySelector(".ksqld-pane-type").addEventListener("change", function () { toggleChartUI(card); });
@@ -285,7 +284,7 @@
   function buildCards(panes, count) {
     $panes.innerHTML = "";
     for (var i = 0; i < count && i < MAX_PANES; i++) {
-      $panes.appendChild(buildPaneCard(i, panes[i] || {}));
+      $panes.appendChild(buildPaneCard(panes[i] || {}));
     }
     buildTabs(count);
     setActivePane(activePane); // 範囲外なら内部で補正

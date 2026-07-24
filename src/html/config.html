@@ -9,8 +9,12 @@
           <input type="checkbox" id="ksqld-deploy" />
           運用環境に反映
         </label>
-        <button id="ksqld-preview-open" class="ksqld-btn ksqld-icon-btn" type="button" title="編集中のダッシュボードをプレビュー">👁 プレビュー</button>
-        <button id="ksqld-tools-open" class="ksqld-btn ksqld-icon-btn" type="button" title="複写・入れ替えツール" aria-label="複写・入れ替えツール">⚙ ツール</button>
+        <button id="ksqld-preview-open" class="ksqld-btn ksqld-icon-btn" type="button" title="編集中のダッシュボードをプレビュー">
+          <svg class="ksqld-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 3C4.7 3 1.9 5 .6 8c1.3 3 4.1 5 7.4 5s6.1-2 7.4-5C14.1 5 11.3 3 8 3zm0 8.4A3.4 3.4 0 1 1 8 4.6a3.4 3.4 0 0 1 0 6.8zM8 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg>プレビュー
+        </button>
+        <button id="ksqld-tools-open" class="ksqld-btn ksqld-icon-btn" type="button" title="複写・入れ替えツール" aria-label="複写・入れ替えツール">
+          <svg class="ksqld-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M9.4 1l.4 1.8a5.4 5.4 0 0 1 1.4.8l1.7-.6 1.4 2.4-1.4 1.2a5.5 5.5 0 0 1 0 1.7l1.4 1.2-1.4 2.4-1.7-.6a5.4 5.4 0 0 1-1.4.8L9.4 15H6.6l-.4-1.8a5.4 5.4 0 0 1-1.4-.8l-1.7.6-1.4-2.4 1.4-1.2a5.5 5.5 0 0 1 0-1.7L1.7 6.4l1.4-2.4 1.7.6a5.4 5.4 0 0 1 1.4-.8L6.6 1h2.8zM8 5.5A2.5 2.5 0 1 0 8 10.5 2.5 2.5 0 0 0 8 5.5z"/></svg>ツール
+        </button>
         <span id="ksqld-message" class="ksqld-message" role="status"></span>
       </div>
     </div>
@@ -136,8 +140,9 @@
     <div class="ksqld-pane-body">
       <div class="ksqld-pane-sql-col">
         <div class="ksqld-pane-head">
-          <span class="ksqld-pane-index"></span>
-          <input type="text" class="ksqld-input ksqld-pane-title" placeholder="ペインのタイトル" />
+          <label class="ksqld-label">ペイン名（タブに表示されます）
+            <input type="text" class="ksqld-input ksqld-pane-title" placeholder="例: 顧客別 集計" />
+          </label>
         </div>
         <label class="ksqld-label">SQL</label>
         <textarea class="ksqld-textarea ksqld-pane-sql" rows="8"
