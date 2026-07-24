@@ -30,7 +30,7 @@ var spawnSync = require("child_process").spawnSync;
 
 var ROOT = path.resolve(__dirname, "..");
 var DIST = path.join(ROOT, "dist");
-var MANIFEST = path.join(ROOT, "manifest.json");
+var MANIFEST = path.join(ROOT, "src", "manifest.json"); // プラグイン本体は src/ 配下
 var OUT = path.join(DIST, "ksql-dashboard.zip");
 var PPK = path.join(DIST, "ksql-dashboard.ppk");
 var ENV_FILE = path.join(ROOT, ".env");

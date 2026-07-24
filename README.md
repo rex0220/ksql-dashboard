@@ -32,27 +32,32 @@ var result = await engine.runQuery(sql, { client: client, maxRecords: 500 });
 
 ### エンジンの同梱
 
-`@rex0220/kintone-sql-tools` の **UMD ビルド v3.19.0** を `js/ksql-engine.umd.js` として同梱済み。
-`manifest.json` は `js/ksql-engine.umd.js` → `js/desktop.js`（config も同順）で読み込む。
+`@rex0220/kintone-sql-tools` の **UMD ビルド v3.19.0** を `src/js/ksql-engine.umd.js` として同梱済み。
+`src/manifest.json` は `js/ksql-engine.umd.js` → `js/desktop.js`（config も同順）で読み込む（パスは manifest からの相対）。
 
 更新する場合は親リポジトリの `dist-engine/ksql-engine.umd.js` を再コピーし、**版を上げたときは
-`js/desktop.js` と `js/config.js` の `KSQL_VERSION` も更新**する。
+`src/js/desktop.js` と `src/js/config.js` の `KSQL_VERSION` も更新**する。
 
 > **注意**: UMD は必ず `window.ksql.get("<version>")` で**バージョンを明示**して取得する（複数プラグインの別バージョン共存対策）。`get()` が `undefined` を返す場合、ダッシュボードは「kSQL エンジン未読込」と表示する。
 
 ## ディレクトリ
 
+プラグイン本体は `src/` 配下、ビルド関連はルート。
+
 ```
 ksql-dashboard/
-├── manifest.json          プラグイン定義
-├── html/config.html       設定画面
-├── js/config.js           設定画面ロジック
-├── js/desktop.js          ダッシュボード描画
-├── js/ksql-engine.umd.js  kSQL エンジン UMD v3.19.0（同梱）
-├── scripts/package.js     zip 作成（cli-kintone plugin pack）
-├── css/config.css
-├── css/desktop.css
-└── image/icon.png         (48x48 プレースホルダ・要差し替え)
+├── src/                    プラグイン本体（pack 対象）
+│   ├── manifest.json       プラグイン定義
+│   ├── html/config.html    設定画面
+│   ├── js/config.js        設定画面ロジック
+│   ├── js/desktop.js       ダッシュボード描画
+│   ├── js/ksql-engine.umd.js  kSQL エンジン UMD v3.19.0（同梱）
+│   ├── css/config.css
+│   ├── css/desktop.css
+│   └── image/icon.png      (48x48 プレースホルダ・要差し替え)
+├── scripts/package.js      zip 作成／アップロード（cli-kintone）
+├── package.json            npm run package / upload
+└── dist/                   生成物（.zip / .ppk・gitignore）
 ```
 
 ## パッケージ化
@@ -73,7 +78,7 @@ npm run package
 ```sh
 npx cli-kintone plugin keygen --output dist/ksql-dashboard.ppk
 npx cli-kintone plugin pack \
-  --input manifest.json \
+  --input src/manifest.json \
   --output dist/ksql-dashboard.zip \
   --private-key dist/ksql-dashboard.ppk
 ```

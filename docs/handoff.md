@@ -7,23 +7,27 @@
 ## 0. まず把握すること
 
 - 本プロジェクトは **kintone プラグイン（サンプル）**。レコード一覧画面に、kSQL(SQL方言)で取得したデータを **1〜4 分割ダッシュボード**として表・グラフ表示する。
-- データ取得は **kSQL エンジン read-only ライブラリ（別プロジェクト「B66」）** の公開 API を使う。**実物ビルド v3.19.0 を `js/ksql-engine.umd.js` に同梱済み**（`@rex0220/kintone-sql-tools` の `dist-engine/ksql-engine.umd.js` をコピー）。
+- データ取得は **kSQL エンジン read-only ライブラリ（別プロジェクト「B66」）** の公開 API を使う。**実物ビルド v3.19.0 を `src/js/ksql-engine.umd.js` に同梱済み**（`@rex0220/kintone-sql-tools` の `dist-engine/ksql-engine.umd.js` をコピー）。
 - 現状は雛形＋SQL 検証機能がコミット済み。設定画面・レイアウト・表/グラフ描画・SQL 検証が実エンジンで動作する。
 
 ## 1. ディレクトリ構成と各ファイルの役割
 
 ```
 ksql-dashboard/
-├── manifest.json          プラグイン定義（desktop / config の js・css・icon）
-├── README.md              利用者向け説明・パッケージ手順
-├── html/config.html       設定画面 UI（分割選択＋ペイン一覧＋<template>）
-├── js/config.js           設定ロジック（getConfig/setConfig・ペイン動的生成・検証）
-├── js/desktop.js          ダッシュボード描画（config読込→grid→runQuery→表/グラフ）
-├── js/ksql-engine.umd.js  B66 実物ビルド v3.19.0（親リポジトリ dist-engine からコピー）
-├── css/config.css
-├── css/desktop.css
-├── image/icon.png         48x48 プレースホルダ（要差し替え）
-└── docs/handoff.md        本書
+├── src/                     プラグイン本体（cli-kintone plugin pack の対象）
+│   ├── manifest.json        プラグイン定義（desktop / config の js・css・icon）
+│   ├── html/config.html     設定画面 UI（分割選択＋ペイン一覧＋<template>）
+│   ├── js/config.js         設定ロジック（getConfig/setConfig・ペイン動的生成・検証）
+│   ├── js/desktop.js        ダッシュボード描画（config読込→grid→runQuery→表/グラフ）
+│   ├── js/ksql-engine.umd.js B66 実物ビルド v3.19.0（親リポジトリ dist-engine からコピー）
+│   ├── css/config.css
+│   ├── css/desktop.css
+│   └── image/icon.png       48x48 プレースホルダ（要差し替え）
+├── scripts/package.js       zip 作成／アップロード（cli-kintone）
+├── package.json             npm run package / upload
+├── README.md                利用者向け説明・パッケージ手順
+├── dist/                    生成物（.zip / .ppk・gitignore）
+└── docs/handoff.md          本書
 ```
 
 ## 2. 機能仕様（実装済み）
@@ -131,14 +135,14 @@ ExplainResult = { type: "explain", lines: string[], text: string, metrics }
 
 ## 4. UMD の更新手順（B66 を新版に上げるとき）
 1. `@rex0220/kintone-sql-tools` の **`dist-engine/ksql-engine.umd.js`** を取得（build 済みのもの）。
-2. 本リポジトリの `js/ksql-engine.umd.js` を上書き。
+2. 本リポジトリの `src/js/ksql-engine.umd.js` を上書き。
    ```sh
-   cp ../kintone-sql-tools/dist-engine/ksql-engine.umd.js js/ksql-engine.umd.js
+   cp ../kintone-sql-tools/dist-engine/ksql-engine.umd.js src/js/ksql-engine.umd.js
    ```
-3. **版を上げた場合は `KSQL_VERSION` を両方更新する**（`js/desktop.js` と `js/config.js`）。UMD は
+3. **版を上げた場合は `KSQL_VERSION` を両方更新する**（`src/js/desktop.js` と `src/js/config.js`）。UMD は
    `window.ksql.versions[<版>]` に登録するため、定数がずれると `get()` が `undefined` になり
    「kSQL エンジン未読込」表示になる。
-4. `manifest.json` の読み込み順は `js/ksql-engine.umd.js` → `js/desktop.js`（config も同様）。変更不要。
+4. `src/manifest.json` の読み込み順は `js/ksql-engine.umd.js` → `js/desktop.js`（manifest 相対・config も同様）。変更不要。
 5. `npm run package` して実 kintone で確認。
 
 > 現在同梱しているのは **v3.19.0**。仕様は親リポジトリ `docs/ksql_engine_library.md` が正。
@@ -155,7 +159,7 @@ ExplainResult = { type: "explain", lines: string[], text: string, metrics }
   生 CLI で行う場合:
   ```sh
   npx cli-kintone plugin keygen --output dist/ksql-dashboard.ppk   # 初回のみ
-  npx cli-kintone plugin pack -i manifest.json -o dist/ksql-dashboard.zip --private-key dist/ksql-dashboard.ppk
+  npx cli-kintone plugin pack -i src/manifest.json -o dist/ksql-dashboard.zip --private-key dist/ksql-dashboard.ppk
   ```
   **パッケージ化＋自動アップロード**: `npm run upload`（= package ＋ `cli-kintone plugin upload`）。
   認証は `.env`（`.env.example` 参照・コミット禁止）の `KINTONE_BASE_URL`/`KINTONE_USERNAME`/`KINTONE_PASSWORD`。
@@ -165,7 +169,7 @@ ExplainResult = { type: "explain", lines: string[], text: string, metrics }
 
 ## 6. 次の作業候補（TODO・優先度順の目安）
 
-1. **アイコン差し替え** — `image/icon.png` を実用的な 48×48（or より大きい）PNG に。
+1. **アイコン差し替え** — `src/image/icon.png` を実用的な 48×48（or より大きい）PNG に。
 2. **SQL プレビュー検証** — 設定画面の各ペインに「検証」ボタン→ `engine.explainQuery(sql, {client})` or `runQuery` で実行前チェック（`window.ksql` があれば）。エラーは `err.code`/`err.message` を表示。
 3. **グラフ種類の追加** — 現状は横棒のみ。円・折れ線・数値カード等。依存を増やさない方針（CSP）なら SVG 自前描画。
 4. **レイアウトの柔軟化** — 3分割の縦横、4分割の比率、ペインごとの高さ指定など。
@@ -178,12 +182,12 @@ ExplainResult = { type: "explain", lines: string[], text: string, metrics }
 - **CSP**: kintone プラグインは外部 CDN スクリプトを読めない。ライブラリ追加は避け、必要なら同梱＋自前実装（現状グラフは自前 SVG）。
 - **値は文字列**: B66 の仕様。数値・日付は表示側で解釈する。
 - **kintone プラグイン規約**: `kintone.$PLUGIN_ID` で PLUGIN_ID を受ける（config.js/desktop.js は IIFE で受領済み）。設定は `kintone.plugin.app.getConfig/setConfig`。
-- **manifest 参照ファイルは実在必須**: 参照先が無いと pack が失敗する（`js/ksql-engine.umd.js` は常に配置しておく）。
+- **manifest 参照ファイルは実在必須**: 参照先が無いと pack が失敗する（`src/js/ksql-engine.umd.js` は常に配置しておく）。
 - **コミット単位**: 機能ごとに小さく。`*.zip`/`*.ppk`/`node_modules` は `.gitignore` 済み。
 
 ## 8. 作業開始時のチェックリスト
 
 - [ ] `git log --oneline` で現状コミットを確認。
-- [ ] `manifest.json` の参照ファイルが全て存在するか（`node -e` や find で確認）。
+- [ ] `src/manifest.json` の参照ファイルが全て存在するか（`node -e` や find で確認）。
 - [ ] 変更後 `npm run package`（cli-kintone plugin pack）が成功するか。
 - [ ] `desktop.js` が B66 API 契約（§3）から外れていないか（実物差し替え時に壊れないため）。
