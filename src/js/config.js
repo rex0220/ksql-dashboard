@@ -51,6 +51,7 @@
   var $toolsMsg = document.getElementById("ksqld-tools-msg");
   var $copyTarget = document.getElementById("ksqld-copy-target");
   var $copyViewBtn = document.getElementById("ksqld-copy-view");
+  var $swapViewBtn = document.getElementById("ksqld-swap-view");
   var $download = document.getElementById("ksqld-download");
   var $uploadBtn = document.getElementById("ksqld-upload");
   var $importFile = document.getElementById("ksqld-import-file");
@@ -517,6 +518,7 @@
     var none = $copyTarget.options.length === 0;
     $copyTarget.disabled = none;
     $copyViewBtn.disabled = none;
+    $swapViewBtn.disabled = none;
   }
 
   // 今編集中の一覧の設定を、対象の一覧へ複写する
@@ -541,6 +543,45 @@
     touched[targetKey] = true;
     markDirty();
     toolsMessage("「" + keyLabel(currentKey) + "」の設定を「" + keyLabel(targetKey) + "」へ複写しました。", "ok");
+  }
+
+  // 入れ替え用: 格納先キーの形式に合わせてダッシュボードを整形する。
+  // 共通(__default__)は source を持たず、一覧別は source を持つ。
+  // 共通から来たデータ（source 無し）は、ペインがあれば個別・無ければ共通とみなす。
+  function coerceDashFor(key, d) {
+    d = d || {};
+    var panes = Array.isArray(d.panes) ? d.panes : [];
+    var out = {
+      enabled: d.enabled !== false,
+      split: normalizeSplit(d.split),
+      panes: panes,
+      refreshSec: normalizeRefresh(d.refreshSec)
+    };
+    if (key !== DEFAULT_KEY) {
+      out.source = d.source === "common" ? "common"
+        : d.source === "individual" ? "individual"
+        : (panes.length ? "individual" : "common");
+    }
+    return out;
+  }
+
+  // 今編集中の一覧の設定と、対象の一覧の設定を相互に入れ替える
+  function swapViewWith(targetKey) {
+    if (!targetKey || targetKey === currentKey) {
+      toolsMessage("対象の一覧を選んでください（今の一覧とは別の一覧）。", "error");
+      return;
+    }
+    stashEditor(); // 現在の内容を確定
+    var a = ensureDash(currentKey);
+    var b = ensureDash(targetKey);
+    dashboards[currentKey] = coerceDashFor(currentKey, b);
+    dashboards[targetKey] = coerceDashFor(targetKey, a);
+    touched[currentKey] = true;
+    touched[targetKey] = true;
+    markDirty();
+    loadEditor(dashboards[currentKey]); // 入れ替え後の内容を画面へ反映
+    refreshOpPanes();                   // ペイン数の変化をダイアログの選択肢にも反映
+    toolsMessage("「" + keyLabel(currentKey) + "」と「" + keyLabel(targetKey) + "」の設定を入れ替えました。", "ok");
   }
 
   // --- 設定のダウンロード／アップロード -----------------------------------
@@ -827,6 +868,7 @@
   $opCopy.addEventListener("click", function () { paneOp("copy"); });
   $opSwap.addEventListener("click", function () { paneOp("swap"); });
   $copyViewBtn.addEventListener("click", function () { copyViewTo($copyTarget.value); });
+  $swapViewBtn.addEventListener("click", function () { swapViewWith($copyTarget.value); });
   // 設定のダウンロード／アップロード
   $download.addEventListener("click", downloadConfig);
   $uploadBtn.addEventListener("click", function () { $importFile.click(); });
