@@ -82,7 +82,16 @@
 .ksqld-pane-maxrecords-row { display: flex; margin-top: 8px; }
 .ksqld-pane-maxrecords { width: 110px; }
 
-.ksqld-panes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+/* ペインはタブで1枚だけ表示（全幅） */
+.ksqld-panes { display: block; }
+.ksqld-pane-tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+.ksqld-pane-tab {
+  border: 1px solid #c9c9c9; background: #f0f0f0; color: #333;
+  border-radius: 6px 6px 0 0; padding: 6px 14px; font-size: 13px; cursor: pointer;
+  max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ksqld-pane-tab:hover { background: #e8e8e8; }
+.ksqld-pane-tab.active { background: #3498db; border-color: #3498db; color: #fff; font-weight: bold; }
 .ksqld-pane-card {
   border: 1px solid #e3e3e3;
   border-radius: 6px;
@@ -129,6 +138,3 @@
 .ksqld-message.ok { color: #27ae60; }
 .ksqld-message.error { color: #e74c3c; }
 
-@media (max-width: 640px) {
-  .ksqld-panes { grid-template-columns: 1fr; }
-}

@@ -31,6 +31,7 @@
   var $editor = document.getElementById("ksqld-editor");
   var $split = document.getElementById("ksqld-split");
   var $refresh = document.getElementById("ksqld-refresh");
+  var $paneTabs = document.getElementById("ksqld-pane-tabs");
   var $panes = document.getElementById("ksqld-panes");
   var $save = document.getElementById("ksqld-save");
   var $cancel = document.getElementById("ksqld-cancel");
@@ -278,12 +279,56 @@
 
   // 現在編集中ビューの全ペイン（分割で非表示になった分も保持する裏配列）
   var editorPanes = [];
+  var activePane = 0; // タブで選択中のペイン番号（0 始まり）
 
-  // 指定枚数のペインフォームを描画
+  // 指定枚数のペインフォームを描画（全カードを DOM に保持し、タブで1枚だけ表示）
   function buildCards(panes, count) {
     $panes.innerHTML = "";
     for (var i = 0; i < count && i < MAX_PANES; i++) {
       $panes.appendChild(buildPaneCard(i, panes[i] || {}));
+    }
+    buildTabs(count);
+    setActivePane(activePane); // 範囲外なら内部で補正
+  }
+
+  // タブ（ペイン番号＋タイトル）を生成
+  function buildTabs(count) {
+    $paneTabs.innerHTML = "";
+    for (var i = 0; i < count && i < MAX_PANES; i++) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "ksqld-pane-tab";
+      b.appendChild(document.createTextNode("")); // ラベルは refreshTabLabels で設定
+      b.addEventListener("click", (function (idx) {
+        return function () { setActivePane(idx); };
+      })(i));
+      $paneTabs.appendChild(b);
+    }
+    refreshTabLabels();
+  }
+
+  function paneTabText(i) {
+    var cards = getCards();
+    var title = cards[i] ? cards[i].querySelector(".ksqld-pane-title").value.trim() : "";
+    return (i + 1) + (title ? " " + title : "");
+  }
+
+  // タブのラベル（タイトル）を最新化
+  function refreshTabLabels() {
+    for (var i = 0; i < $paneTabs.children.length; i++) {
+      $paneTabs.children[i].textContent = paneTabText(i);
+    }
+  }
+
+  // 選択ペインだけ表示し、他は隠す。タブの選択状態も更新。
+  function setActivePane(i) {
+    var cards = getCards();
+    if (i >= cards.length) { i = cards.length - 1; }
+    if (i < 0) { i = 0; }
+    activePane = i;
+    for (var j = 0; j < cards.length; j++) { cards[j].hidden = (j !== i); }
+    for (var k = 0; k < $paneTabs.children.length; k++) {
+      $paneTabs.children[k].classList.toggle("active", k === i);
     }
   }
 
@@ -328,6 +373,7 @@
     $split.value = normalizeSplit(dash.split);
     $refresh.value = (dash.refreshSec ? Math.round(dash.refreshSec / 60) : 0); // 秒→分
     editorPanes = (dash.panes || []).slice(); // 全ペインを裏配列に保持
+    activePane = 0; // ビュー切替時は先頭ペインを表示
     buildCards(editorPanes, parseInt($split.value, 10) || 1);
     updateModeUI();
   }
@@ -626,6 +672,7 @@
       toolsMessage("ペイン " + (s + 1) + " を ペイン " + (d + 1) + " へ複写しました。", "ok");
     }
     syncVisibleToBacking();
+    refreshTabLabels();
     markTouched();
   }
 
@@ -738,6 +785,12 @@
   // ペインの入力・選択変更で touched（動的生成のカードはイベント委譲で拾う）
   $panes.addEventListener("input", markTouched);
   $panes.addEventListener("change", markTouched);
+  // タイトル変更はタブ名にも反映
+  $panes.addEventListener("input", function (e) {
+    if (e.target && e.target.classList && e.target.classList.contains("ksqld-pane-title")) {
+      refreshTabLabels();
+    }
+  });
   $view.addEventListener("change", function () { switchView($view.value); });
 
   // 複写・入れ替えツール（歯車ダイアログ）
