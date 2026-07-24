@@ -10,9 +10,17 @@ private: false
 
 kSQL Dashboard は、kintone のレコード一覧画面に **kSQL（read-only な SQL ライク構文）で取得したデータを、表・グラフのダッシュボードとして表示**するプラグインです。集計クエリを書くだけで、一覧の上部に「今の数字」を並べられます。
 
+> **📌 本記事の位置づけ**
 > kSQL 本体（アプリを SQL ライクに操作するプラグイン）については別記事を参照してください。本記事はその **エンジンを使った可視化プラグイン** の紹介です。
 
 ![2026-07-25_01h43_56.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/100572/d8349afb-d342-4f35-9cc9-4d0b587f8638.png)
+
+### 🔥 主な特徴
+
+- 📊 **SQL を書くだけで即可視化**: 1〜4 分割のレイアウトに対応し、表や棒グラフ（縦・横）を描画
+- 🔒 **外部依存なし＆CSP 安全**: チャートライブラリ不使用・完全自前描画で安心
+- 👁️ **実データで即座にプレビュー**: アプリ更新を待たずに設定画面上で見た目とデータを確認可能
+- ⚙️ **柔軟な出し分け**: 「共通設定」と「一覧ごとの個別設定」に対応
 
 ---
 
@@ -24,7 +32,8 @@ kSQL Dashboard は、kintone のレコード一覧画面に **kSQL（read-only �
 - データ取得は **kSQL エンジン（read-only）** を同梱。外部 CDN 不要（CSP 安全）で、グラフも依存なしの自前描画です。
 - 値はすべて文字列で返るため、数値は**3桁区切り＋右詰め**で見やすく整形します。
 
-GitHub: https://github.com/rex0220/ksql-dashboard （kSQL エンジン本体: https://github.com/rex0220/kintone-sql-tools ）
+GitHub: https://github.com/rex0220/ksql-dashboard
+（kSQL エンジン本体: https://github.com/rex0220/kintone-sql-tools ）
 ライセンス: MIT
 
 ---
@@ -113,6 +122,8 @@ kSQL の **read-only 単文**（`SELECT` / `WITH` / `UNION` / `SHOW APPS` / `DES
 - 値はすべて文字列で返ります。数値の列は自動で3桁区切り・右詰め表示になります。
 
 **検証**ボタンで、保存前に構文チェックできます（`SELECT`/`WITH`/`UNION` は EXPLAIN、`SHOW`/`DESCRIBE` は軽い実行で確認）。
+
+> 使える関数（`SUBSTR` / `COUNT` / `SUM` など）や標準 SQL との違い・制限事項は、[kSQL 本体のリポジトリ](https://github.com/rex0220/kintone-sql-tools)を参照してください。kintone の日時は ISO8601 形式の文字列で返るため、`SUBSTR(更新日時, 1, 7)` のような切り出しで年月キーを作れます。
 
 ---
 
