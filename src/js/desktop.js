@@ -18,13 +18,14 @@
   }
 
   function normalizeSplit(s) {
-    return ["1", "2", "3", "4"].indexOf(String(s)) !== -1 ? String(s) : "1";
+    return ["1", "2", "3", "3b", "4"].indexOf(String(s)) !== -1 ? String(s) : "1";
   }
 
   // 設定を正規化（旧形式 { split, panes } は既定ダッシュボードへ移行）
   function normalizeConfig(raw) {
-    var cfg = { dashboards: {} };
+    var cfg = { dashboards: {}, knownViews: null };
     if (!raw || typeof raw !== "object") { return cfg; }
+    if (Array.isArray(raw.knownViews)) { cfg.knownViews = raw.knownViews.map(String); }
     if (raw.dashboards && typeof raw.dashboards === "object") {
       Object.keys(raw.dashboards).forEach(function (k) {
         var d = raw.dashboards[k] || {};
@@ -53,9 +54,17 @@
     return !!c && c.enabled !== false && (c.panes || []).length > 0;
   }
 
+  // その一覧が「設定保存時点で存在した既知の一覧」か。
+  // knownViews が無い(旧設定)場合は情報なしとして true（従来どおり全一覧に共通を継承）。
+  function isKnownView(config, vid) {
+    var known = config.knownViews;
+    if (!known || !known.length) { return true; }
+    return known.indexOf(vid) !== -1;
+  }
+
   // 表示中ビューに対応するダッシュボードを選ぶ。
   //  - 一覧別設定あり: 無効→非表示 / source=individual→専用（ペインがあれば） / source=common→共通
-  //  - 一覧別設定なし: 共通を継承（共通が有効なら）
+  //  - 一覧別設定なし: 既知の一覧なら共通を継承。設定後に追加された一覧は非表示。
   function pickDashboard(config, event) {
     var dashboards = config.dashboards || {};
     var common = dashboards[DEFAULT_KEY];
@@ -70,7 +79,8 @@
       // source === "common"
       return commonUsable(config) ? common : null;
     }
-    // 一覧別設定なし → 共通を継承
+    // 一覧別設定なし → 設定後に追加された一覧は非表示。既知の一覧のみ共通を継承。
+    if (vid && !isKnownView(config, vid)) { return null; }
     return commonUsable(config) ? common : null;
   }
 

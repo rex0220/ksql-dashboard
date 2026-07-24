@@ -9,10 +9,13 @@
 .ksqld-grid[data-split="1"] { grid-template-columns: 1fr; }
 .ksqld-grid[data-split="2"] { grid-template-columns: 1fr 1fr; }
 .ksqld-grid[data-split="3"] { grid-template-columns: 1fr 1fr; }
+.ksqld-grid[data-split="3b"] { grid-template-columns: 1fr 1fr; }
 .ksqld-grid[data-split="4"] { grid-template-columns: 1fr 1fr; }
 
-/* 3分割は上段2枚・下段1枚（3枚目を全幅に） */
+/* 3分割(上2・下1): 3枚目を全幅に */
 .ksqld-grid[data-split="3"] > .ksqld-tile:nth-child(3) { grid-column: 1 / -1; }
+/* 3分割(上1・下2): 1枚目を全幅に */
+.ksqld-grid[data-split="3b"] > .ksqld-tile:nth-child(1) { grid-column: 1 / -1; }
 
 .ksqld-tile {
   border: 1px solid #e3e3e3;
@@ -61,5 +64,6 @@
 @media (max-width: 760px) {
   .ksqld-grid[data-split="2"],
   .ksqld-grid[data-split="3"],
+  .ksqld-grid[data-split="3b"],
   .ksqld-grid[data-split="4"] { grid-template-columns: 1fr; }
 }

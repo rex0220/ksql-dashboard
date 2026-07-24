@@ -16,6 +16,7 @@
 
   var MAX_PANES = 4;
   var DEFAULT_KEY = "__default__"; // 既定ダッシュボードのキー
+  var DEFAULT_VIEW_ID = "20";      // kintone 既定の「(すべて)」ビューの固定 viewId
   // desktop.js と同じく UMD レジストリから明示バージョンで取得する
   var KSQL_VERSION = "3.19.0";
   // SHOW/DESCRIBE 検証時の取得上限（メタデータなので小さくてよい）
@@ -35,16 +36,30 @@
   var $message = document.getElementById("ksqld-message");
   var $template = document.getElementById("ksqld-pane-template");
   var $deploy = document.getElementById("ksqld-deploy");
+  // 複写・入れ替えツール（歯車ダイアログ）
+  var $toolsOpen = document.getElementById("ksqld-tools-open");
+  var $toolsClose = document.getElementById("ksqld-tools-close");
+  var $modal = document.getElementById("ksqld-tools-modal");
+  var $opSrc = document.getElementById("ksqld-op-src");
+  var $opDst = document.getElementById("ksqld-op-dst");
+  var $opCopy = document.getElementById("ksqld-op-copy");
+  var $opSwap = document.getElementById("ksqld-op-swap");
+  var $opCurView = document.getElementById("ksqld-op-curview");
+  var $toolsMsg = document.getElementById("ksqld-tools-msg");
+  var $copyTarget = document.getElementById("ksqld-copy-target");
+  var $copyViewBtn = document.getElementById("ksqld-copy-view");
 
   // --- 設定の読込と正規化（旧形式 { split, panes } からの移行を含む）---------
   function normalizeSplit(s) {
-    return ["1", "2", "3", "4"].indexOf(String(s)) !== -1 ? String(s) : "1";
+    return ["1", "2", "3", "3b", "4"].indexOf(String(s)) !== -1 ? String(s) : "1";
   }
 
   function normalizeConfig(raw) {
-    var cfg = { deployOnSave: false, dashboards: {} };
+    var cfg = { deployOnSave: false, dashboards: {}, knownViews: [] };
     if (!raw || typeof raw !== "object") { return cfg; }
     cfg.deployOnSave = raw.deployOnSave === true;
+    // 設定保存時点で存在した一覧(ビュー)ID。共通の継承範囲を「その時点の一覧」に限る。
+    if (Array.isArray(raw.knownViews)) { cfg.knownViews = raw.knownViews.map(String); }
     if (raw.dashboards && typeof raw.dashboards === "object") {
       Object.keys(raw.dashboards).forEach(function (k) {
         cfg.dashboards[k] = normalizeDash(k, raw.dashboards[k]);
@@ -172,23 +187,43 @@
       .then(function () { $button.disabled = false; });
   }
 
-  // 1枚のペイン設定フォームを生成
-  function buildPaneCard(index, pane) {
-    var node = $template.content.cloneNode(true);
-    var card = node.querySelector(".ksqld-pane-card");
-    card.querySelector(".ksqld-pane-index").textContent = String(index + 1);
+  // カードの入力値を1ペイン分の設定として読み出す
+  function readCard(card) {
+    return {
+      title: card.querySelector(".ksqld-pane-title").value.trim(),
+      sql: card.querySelector(".ksqld-pane-sql").value.trim(),
+      display: card.querySelector(".ksqld-pane-type").value === "chart" ? "chart" : "table",
+      chartType: card.querySelector(".ksqld-pane-chart-type").value === "column" ? "column" : "bar",
+      labelColumn: card.querySelector(".ksqld-pane-label-col").value.trim(),
+      valueColumn: card.querySelector(".ksqld-pane-value-col").value.trim()
+    };
+  }
+
+  // 1ペイン分の設定をカードへ反映（複写・入れ替えでも使用）
+  function applyPaneToCard(card, pane) {
+    pane = pane || {};
     card.querySelector(".ksqld-pane-title").value = pane.title || "";
     card.querySelector(".ksqld-pane-sql").value = pane.sql || "";
     card.querySelector(".ksqld-pane-type").value = pane.display === "chart" ? "chart" : "table";
     card.querySelector(".ksqld-pane-chart-type").value = pane.chartType === "column" ? "column" : "bar";
     card.querySelector(".ksqld-pane-label-col").value = pane.labelColumn || "";
     card.querySelector(".ksqld-pane-value-col").value = pane.valueColumn || "";
+    card.querySelector(".ksqld-chart-cols").hidden =
+      card.querySelector(".ksqld-pane-type").value !== "chart";
+  }
+
+  function getCards() { return $panes.querySelectorAll(".ksqld-pane-card"); }
+
+  // 1枚のペイン設定フォームを生成
+  function buildPaneCard(index, pane) {
+    var node = $template.content.cloneNode(true);
+    var card = node.querySelector(".ksqld-pane-card");
+    card.querySelector(".ksqld-pane-index").textContent = String(index + 1);
+    applyPaneToCard(card, pane);
 
     var $type = card.querySelector(".ksqld-pane-type");
     var $chartCols = card.querySelector(".ksqld-chart-cols");
-    function toggleChartCols() { $chartCols.hidden = $type.value !== "chart"; }
-    $type.addEventListener("change", toggleChartCols);
-    toggleChartCols();
+    $type.addEventListener("change", function () { $chartCols.hidden = $type.value !== "chart"; });
 
     card.querySelector(".ksqld-validate").addEventListener("click", function () {
       validateSql(card);
@@ -196,6 +231,9 @@
 
     return card;
   }
+
+  // 現在編集中ビューの全ペイン（分割で非表示になった分も保持する裏配列）
+  var editorPanes = [];
 
   // 指定枚数のペインフォームを描画
   function buildCards(panes, count) {
@@ -205,9 +243,16 @@
     }
   }
 
-  // 分割数変更時：画面上の入力を保持して枚数だけ増減
+  // 画面上の見えているカードの入力を裏配列へ反映（非表示ペインの内容は温存）
+  function syncVisibleToBacking() {
+    var visible = collectPanes();
+    for (var i = 0; i < visible.length; i++) { editorPanes[i] = visible[i]; }
+  }
+
+  // 分割数変更時：画面上の入力を裏配列へ退避してから、新しい枚数で再描画
   function onSplitChange() {
-    buildCards(collectPanes(), parseInt($split.value, 10) || 1);
+    syncVisibleToBacking();
+    buildCards(editorPanes, parseInt($split.value, 10) || 1);
   }
 
   // 対象ビュー種別（共通/一覧別）と有効/共通・個別に応じて UI を切り替え
@@ -237,25 +282,16 @@
     $enabled.checked = dash.enabled !== false;
     $source.value = dash.source === "individual" ? "individual" : "common";
     $split.value = normalizeSplit(dash.split);
-    buildCards(dash.panes || [], parseInt($split.value, 10) || 1);
+    editorPanes = (dash.panes || []).slice(); // 全ペインを裏配列に保持
+    buildCards(editorPanes, parseInt($split.value, 10) || 1);
     updateModeUI();
   }
 
   // 画面上のペイン入力を配列で収集
   function collectPanes() {
-    var cards = $panes.querySelectorAll(".ksqld-pane-card");
+    var cards = getCards();
     var out = [];
-    for (var i = 0; i < cards.length; i++) {
-      var c = cards[i];
-      out.push({
-        title: c.querySelector(".ksqld-pane-title").value.trim(),
-        sql: c.querySelector(".ksqld-pane-sql").value.trim(),
-        display: c.querySelector(".ksqld-pane-type").value === "chart" ? "chart" : "table",
-        chartType: c.querySelector(".ksqld-pane-chart-type").value === "column" ? "column" : "bar",
-        labelColumn: c.querySelector(".ksqld-pane-label-col").value.trim(),
-        valueColumn: c.querySelector(".ksqld-pane-value-col").value.trim()
-      });
-    }
+    for (var i = 0; i < cards.length; i++) { out.push(readCard(cards[i])); }
     return out;
   }
 
@@ -321,6 +357,11 @@
               index: typeof v.index === "string" ? parseInt(v.index, 10) : (v.index || 0) });
           }
         });
+        // kintone 既定の「(すべて)」ビュー(viewId=20)は views.json に含まれないため補完する。
+        // 通常の一覧選択では末尾に表示されるため、大きな index で最後に並べる。
+        if (!list.some(function (v) { return v.id === DEFAULT_VIEW_ID; })) {
+          list.push({ id: DEFAULT_VIEW_ID, name: "(すべて)", type: "LIST", index: Number.MAX_SAFE_INTEGER });
+        }
         list.sort(function (a, b) { return a.index - b.index; });
         return list;
       });
@@ -343,6 +384,7 @@
       }
     });
     $view.value = prev; // 選択を維持
+    refreshCopyTarget();
   }
 
   function keyLabel(key) {
@@ -350,44 +392,134 @@
     return viewsById[key] ? viewsById[key].name : ("ビュー " + key);
   }
 
+  // 一覧複写の「複写先」候補を、対象ビュー選択（現在の選択を除く）から作る
+  function refreshCopyTarget() {
+    $copyTarget.innerHTML = "";
+    for (var i = 0; i < $view.options.length; i++) {
+      var o = $view.options[i];
+      if (o.value === currentKey) { continue; }
+      $copyTarget.appendChild(new Option(o.text, o.value));
+    }
+    var none = $copyTarget.options.length === 0;
+    $copyTarget.disabled = none;
+    $copyViewBtn.disabled = none;
+  }
+
+  // 今編集中の一覧の設定を、対象の一覧へ複写する
+  function copyViewTo(targetKey) {
+    if (!targetKey || targetKey === currentKey) {
+      toolsMessage("複写先を選んでください（今の一覧とは別の一覧）。", "error");
+      return;
+    }
+    stashEditor(); // 現在の内容を確定
+    var src = dashboards[currentKey] || { split: "1", panes: [] };
+    var panes = JSON.parse(JSON.stringify(src.panes || [])); // 文字列のみなので安全に複製
+    if (targetKey === DEFAULT_KEY) {
+      dashboards[targetKey] = { enabled: src.enabled !== false, split: normalizeSplit(src.split), panes: panes };
+    } else {
+      // 複写先はその一覧専用（個別）として表示させる
+      dashboards[targetKey] = {
+        enabled: src.enabled !== false, source: "individual",
+        split: normalizeSplit(src.split), panes: panes
+      };
+    }
+    touched[targetKey] = true;
+    toolsMessage("「" + keyLabel(currentKey) + "」の設定を「" + keyLabel(targetKey) + "」へ複写しました。", "ok");
+  }
+
+  // --- 複写・入れ替えツール（歯車ダイアログ）------------------------------
+  function toolsMessage(text, kind) {
+    $toolsMsg.textContent = text;
+    $toolsMsg.className = "ksqld-message" + (kind ? " " + kind : "");
+  }
+
+  // ダイアログ内のペイン選択肢を、現在表示中のペインで更新
+  function refreshOpPanes() {
+    var count = getCards().length;
+    $opSrc.innerHTML = "";
+    $opDst.innerHTML = "";
+    for (var i = 0; i < count; i++) {
+      $opSrc.appendChild(new Option("ペイン " + (i + 1), String(i)));
+      $opDst.appendChild(new Option("ペイン " + (i + 1), String(i)));
+    }
+    if (count >= 2) { $opDst.selectedIndex = 1; } // 既定で別ペインを対象に
+    var few = count < 2;
+    $opSrc.disabled = $opDst.disabled = $opCopy.disabled = $opSwap.disabled = few;
+  }
+
+  function openTools() {
+    refreshOpPanes();
+    refreshCopyTarget();
+    $opCurView.textContent = keyLabel(currentKey);
+    toolsMessage("", "");
+    $modal.hidden = false;
+  }
+
+  function closeTools() { $modal.hidden = true; }
+
+  // ダイアログからのペイン複写／入れ替え
+  function paneOp(mode) {
+    var cards = getCards();
+    var s = parseInt($opSrc.value, 10);
+    var d = parseInt($opDst.value, 10);
+    if (isNaN(s) || isNaN(d) || !cards[s] || !cards[d]) { return; }
+    if (s === d) { toolsMessage("元ペインと対象ペインが同じです。", "error"); return; }
+    if (mode === "swap") {
+      var a = readCard(cards[s]), b = readCard(cards[d]);
+      applyPaneToCard(cards[s], b);
+      applyPaneToCard(cards[d], a);
+      toolsMessage("ペイン " + (s + 1) + " と ペイン " + (d + 1) + " を入れ替えました。", "ok");
+    } else {
+      applyPaneToCard(cards[d], readCard(cards[s]));
+      toolsMessage("ペイン " + (s + 1) + " を ペイン " + (d + 1) + " へ複写しました。", "ok");
+    }
+    syncVisibleToBacking();
+    markTouched();
+  }
+
   // --- ダッシュボード（ビュー別）状態管理 ---------------------------------
-  // 新規の一覧別エントリは「有効・共通」（＝共通を継承）。未編集なら保存時に整理される。
+  // 新規の一覧別エントリは既定 OFF（「この一覧で表示する」を明示的に ON にする運用）。
+  // 未編集なら保存時に整理される（共通が有効なら共通を継承）。共通(既定)は有効で作る。
   function ensureDash(key) {
     if (!dashboards[key]) {
       dashboards[key] = key === DEFAULT_KEY
         ? { enabled: true, split: "1", panes: [] }
-        : { enabled: true, source: "common", split: "1", panes: [] };
+        : { enabled: false, source: "common", split: "1", panes: [] };
     }
     return dashboards[key];
   }
 
-  // 現在のエディタ内容を state へ退避
+  // 現在のエディタ内容を state へ退避（非表示ペインの内容も裏配列から保持）
   function stashEditor() {
+    syncVisibleToBacking();
+    var panes = editorPanes.slice();
     if (currentKey === DEFAULT_KEY) {
       dashboards[currentKey] = {
         enabled: $enabled.checked,
         split: normalizeSplit($split.value),
-        panes: collectPanes()
+        panes: panes
       };
     } else {
       dashboards[currentKey] = {
         enabled: $enabled.checked,
         source: $source.value === "individual" ? "individual" : "common",
         split: normalizeSplit($split.value),
-        panes: collectPanes()
+        panes: panes
       };
     }
   }
 
-  // ビューを選んだだけ（未編集）の空エントリを削除し、既定へフォールバックさせる。
-  // 一方、ユーザーが操作した（touched）エントリは、たとえ空・無効でも意図（＝この一覧では
-  // 表示しない）として残す。既定は常に残す。
+  // 冗長なエントリだけを削除する。
+  //  - OFF（enabled:false）は「この一覧は非表示」という明確な意味を持つため常に残す
+  //    （共通にも継承させない）。
+  //  - ON かつ空かつ未編集のエントリは「共通を表示」と同じ（＝設定なしと等価）なので削除し、
+  //    共通の継承に任せる。既定(共通)は常に残す。
   function pruneUntouchedEmpty() {
     Object.keys(dashboards).forEach(function (k) {
       if (k === DEFAULT_KEY) { return; }
       var d = dashboards[k];
       var empty = !(d.panes && d.panes.length);
-      if (empty && !touched[k]) { delete dashboards[k]; }
+      if (empty && !touched[k] && d.enabled !== false) { delete dashboards[k]; }
     });
   }
 
@@ -398,6 +530,7 @@
     stashEditor();
     currentKey = newKey;
     loadEditor(ensureDash(currentKey));
+    refreshCopyTarget();
     showMessage("", "");
   }
 
@@ -449,6 +582,15 @@
   $panes.addEventListener("change", markTouched);
   $view.addEventListener("change", function () { switchView($view.value); });
 
+  // 複写・入れ替えツール（歯車ダイアログ）
+  $toolsOpen.addEventListener("click", openTools);
+  $toolsClose.addEventListener("click", closeTools);
+  $modal.addEventListener("click", function (e) { if (e.target === $modal) { closeTools(); } }); // 背景クリックで閉じる
+  $opCopy.addEventListener("click", function () { paneOp("copy"); });
+  $opSwap.addEventListener("click", function () { paneOp("swap"); });
+  $copyViewBtn.addEventListener("click", function () { copyViewTo($copyTarget.value); });
+  refreshCopyTarget();
+
   // ビュー一覧を取得してセレクトへ反映（失敗しても既定で続行）
   var appIdForViews = getAppId();
   if (appIdForViews) {
@@ -471,8 +613,13 @@
     var doDeploy = $deploy.checked;
     $save.disabled = true;
 
+    // 現在の一覧一覧を「既知ビュー」として記録（共通の継承範囲）。
+    // ビュー取得に失敗している場合は前回の記録を維持する。
+    var knownViews = Object.keys(viewsById);
+    if (!knownViews.length) { knownViews = config.knownViews || []; }
+
     kintone.plugin.app.setConfig(
-      { config: JSON.stringify({ dashboards: dashboards, deployOnSave: doDeploy }) },
+      { config: JSON.stringify({ dashboards: dashboards, deployOnSave: doDeploy, knownViews: knownViews }) },
       function () {
         // setConfig のコールバックが呼ばれた時点で preview へ保存済み
         if (!doDeploy) {

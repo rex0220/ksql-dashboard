@@ -1,7 +1,7 @@
 .ksqld-config {
-  max-width: 880px;
-  margin: 16px auto;
-  padding: 0 12px;
+  max-width: 1040px;
+  margin: 16px 0;      /* 中央寄せをやめて左寄せ */
+  padding: 0 16px;
   font-family: "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
   color: #2d2d2d;
 }
@@ -27,8 +27,10 @@
 .ksqld-field { display: flex; flex-direction: column; gap: 4px; }
 .ksqld-field > .ksqld-label { margin: 0; }
 .ksqld-toolbar-controls .ksqld-enabled-label { padding-bottom: 6px; }
-.ksqld-subtitle { font-size: 16px; margin: 8px 0; }
-.ksqld-section { margin-bottom: 24px; }
+.ksqld-subtitle { font-size: 16px; margin: 0 0 12px; padding-left: 8px; border-left: 4px solid #3498db; }
+/* 各セクションを区切り線で分離 */
+.ksqld-section { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #e3e3e3; }
+.ksqld-section:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
 .ksqld-label { display: block; font-weight: bold; font-size: 13px; margin: 8px 0 4px; }
 .ksqld-label-inline { display: inline-flex; flex-direction: column; font-size: 12px; margin-right: 12px; }
 .ksqld-hint { font-size: 12px; color: #888; margin: 4px 0 0; }
@@ -42,6 +44,31 @@
 }
 .ksqld-input { width: 100%; }
 .ksqld-textarea { width: 100%; font-family: Consolas, "Courier New", monospace; }
+
+/* 歯車（ツール）ボタン */
+.ksqld-icon-btn { padding: 6px 12px; font-size: 13px; }
+
+/* 注意色ボタン（複写・入れ替えなど上書きを伴う操作） */
+.ksqld-btn-caution { border-color: #e0b050; color: #8a6d3b; background: #fcf6e9; }
+.ksqld-btn-caution:hover { background: #f6ebcf; }
+
+/* 複写・入れ替えダイアログ */
+.ksqld-modal {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 40px 16px; overflow: auto;
+}
+.ksqld-modal-box {
+  background: #fff; border-radius: 8px; width: 100%; max-width: 620px;
+  padding: 16px 20px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+.ksqld-modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.ksqld-modal-title { font-size: 18px; margin: 0; }
+.ksqld-modal-sec { padding: 12px 0; border-top: 1px solid #eee; }
+.ksqld-modal-subtitle { font-size: 14px; margin: 0 0 8px; padding-left: 8px; border-left: 4px solid #3498db; }
+.ksqld-modal-row { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.ksqld-modal-row > span { font-size: 13px; align-self: center; }
 
 .ksqld-panes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .ksqld-pane-card {

@@ -9,6 +9,7 @@
           <input type="checkbox" id="ksqld-deploy" />
           運用環境に反映
         </label>
+        <button id="ksqld-tools-open" class="ksqld-btn ksqld-icon-btn" type="button" title="複写・入れ替えツール" aria-label="複写・入れ替えツール">⚙ ツール</button>
         <span id="ksqld-message" class="ksqld-message" role="status"></span>
       </div>
     </div>
@@ -44,6 +45,7 @@
         <option value="1">1 分割（単一）</option>
         <option value="2">2 分割（横2）</option>
         <option value="3">3 分割（上2・下1）</option>
+        <option value="3b">3 分割（上1・下2）</option>
         <option value="4">4 分割（2×2）</option>
       </select>
       <p class="ksqld-hint">分割数に応じて、下の「ペイン一覧」の数が変わります。</p>
@@ -53,6 +55,45 @@
       <h3 class="ksqld-subtitle">ペイン一覧</h3>
       <div id="ksqld-panes" class="ksqld-panes"><!-- config.js が生成 --></div>
     </section>
+  </div>
+
+  <!-- 複写・入れ替えツール（歯車から開くダイアログ） -->
+  <div id="ksqld-tools-modal" class="ksqld-modal" hidden>
+    <div class="ksqld-modal-box" role="dialog" aria-modal="true" aria-label="複写・入れ替えツール">
+      <div class="ksqld-modal-head">
+        <h3 class="ksqld-modal-title">複写・入れ替え</h3>
+        <button id="ksqld-tools-close" class="ksqld-btn" type="button">閉じる</button>
+      </div>
+
+      <section class="ksqld-modal-sec">
+        <h4 class="ksqld-modal-subtitle">ペインの複写・入れ替え（この一覧内）</h4>
+        <div class="ksqld-modal-row">
+          <label class="ksqld-label-inline">元ペイン
+            <select id="ksqld-op-src" class="ksqld-select"></select>
+          </label>
+          <label class="ksqld-label-inline">対象ペイン
+            <select id="ksqld-op-dst" class="ksqld-select"></select>
+          </label>
+          <button id="ksqld-op-copy" class="ksqld-btn ksqld-btn-caution" type="button">複写（元→対象）</button>
+          <button id="ksqld-op-swap" class="ksqld-btn ksqld-btn-caution" type="button">入れ替え</button>
+        </div>
+        <p class="ksqld-hint">「複写」は対象ペインを上書きします。ペインが1つのときは使えません。</p>
+      </section>
+
+      <section class="ksqld-modal-sec">
+        <h4 class="ksqld-modal-subtitle">一覧の設定を複写</h4>
+        <div class="ksqld-modal-row">
+          <span>今の一覧「<strong id="ksqld-op-curview"></strong>」の設定を</span>
+          <label class="ksqld-label-inline">複写先
+            <select id="ksqld-copy-target" class="ksqld-select"></select>
+          </label>
+          <button id="ksqld-copy-view" class="ksqld-btn ksqld-btn-caution" type="button">複写</button>
+        </div>
+        <p class="ksqld-hint">複写先の一覧の現在の設定は上書きされます。</p>
+      </section>
+
+      <div id="ksqld-tools-msg" class="ksqld-message" role="status"></div>
+    </div>
   </div>
 </div>
 
