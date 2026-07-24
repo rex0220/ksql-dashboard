@@ -180,6 +180,7 @@
     card.querySelector(".ksqld-pane-title").value = pane.title || "";
     card.querySelector(".ksqld-pane-sql").value = pane.sql || "";
     card.querySelector(".ksqld-pane-type").value = pane.display === "chart" ? "chart" : "table";
+    card.querySelector(".ksqld-pane-chart-type").value = pane.chartType === "column" ? "column" : "bar";
     card.querySelector(".ksqld-pane-label-col").value = pane.labelColumn || "";
     card.querySelector(".ksqld-pane-value-col").value = pane.valueColumn || "";
 
@@ -250,6 +251,7 @@
         title: c.querySelector(".ksqld-pane-title").value.trim(),
         sql: c.querySelector(".ksqld-pane-sql").value.trim(),
         display: c.querySelector(".ksqld-pane-type").value === "chart" ? "chart" : "table",
+        chartType: c.querySelector(".ksqld-pane-chart-type").value === "column" ? "column" : "bar",
         labelColumn: c.querySelector(".ksqld-pane-label-col").value.trim(),
         valueColumn: c.querySelector(".ksqld-pane-value-col").value.trim()
       });

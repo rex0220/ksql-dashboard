@@ -132,7 +132,7 @@
     body.appendChild(table);
   }
 
-  // グラフ描画（依存なしの横棒・値はすべて文字列で返るため Number 解釈）
+  // グラフ描画（依存なしの自前 SVG 風・値はすべて文字列で返るため Number 解釈）
   function renderChart(body, result, pane) {
     var rows = result.rows || [];
     var labelCol = pane.labelColumn;
@@ -149,6 +149,12 @@
     });
     var max = data.reduce(function (m, d) { return Math.max(m, d.value); }, 0) || 1;
 
+    if (pane.chartType === "column") { renderColumnChart(body, data, max); }
+    else { renderBarChart(body, data, max); }
+  }
+
+  // 横棒グラフ
+  function renderBarChart(body, data, max) {
     data.forEach(function (d) {
       var rowEl = el("div", "ksqld-bar-row");
       rowEl.appendChild(el("span", "ksqld-bar-label", d.label));
@@ -160,6 +166,24 @@
       rowEl.appendChild(el("span", "ksqld-bar-value", d.display));
       body.appendChild(rowEl);
     });
+  }
+
+  // 縦棒グラフ
+  function renderColumnChart(body, data, max) {
+    var chart = el("div", "ksqld-col-chart");
+    data.forEach(function (d) {
+      var col = el("div", "ksqld-col");
+      var plot = el("div", "ksqld-col-plot");
+      plot.appendChild(el("span", "ksqld-col-value", d.display));
+      var bar = el("div", "ksqld-col-bar");
+      bar.style.height = Math.round((d.value / max) * 100) + "%";
+      bar.title = d.label + ": " + d.display;
+      plot.appendChild(bar);
+      col.appendChild(plot);
+      col.appendChild(el("span", "ksqld-col-label", d.label));
+      chart.appendChild(col);
+    });
+    body.appendChild(chart);
   }
 
   // 1ペインの実行と描画
