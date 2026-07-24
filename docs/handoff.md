@@ -34,7 +34,7 @@ ksql-dashboard/
   - 保存は `kintone.plugin.app.setConfig({ config: JSON.stringify(...) })`。
 - **ダッシュボード描画**（`desktop.js`）
   - `app.record.index.show` で `kintone.app.getHeaderSpaceElement()` に描画。
-  - 分割 grid（1=単一 / 2=横2 / 3=横3 / 4=2×2）。ペイン毎に SQL を実行し表/グラフ表示。
+  - 分割 grid（1=単一 / 2=横2 / 3=上2下1 / 4=2×2）。ペイン毎に SQL を実行し表/グラフ表示。
   - グラフは**依存なしのインライン SVG 風・横棒**（外部ライブラリ不要＝CSP 安全）。
 
 ### 設定データ構造

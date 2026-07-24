@@ -17,6 +17,7 @@
   var $cancel = document.getElementById("ksqld-cancel");
   var $message = document.getElementById("ksqld-message");
   var $template = document.getElementById("ksqld-pane-template");
+  var $deploy = document.getElementById("ksqld-deploy");
 
   // 既存設定の読込
   var saved = kintone.plugin.app.getConfig(PLUGIN_ID);
@@ -177,6 +178,49 @@
     $message.className = "ksqld-message" + (kind ? " " + kind : "");
   }
 
+  // --- 運用環境への反映（アプリのデプロイ）--------------------------------
+  function delay(ms) {
+    return new Promise(function (resolve) { setTimeout(resolve, ms); });
+  }
+
+  // 設定画面のアプリ ID を取得（getId が null の場合は URL から拾う）
+  function getAppId() {
+    var id = (kintone.app && typeof kintone.app.getId === "function") ? kintone.app.getId() : null;
+    if (id) { return id; }
+    var m = location.pathname.match(/\/k\/admin\/app\/(\d+)\b/) ||
+            location.search.match(/[?&]app=(\d+)/);
+    return m ? parseInt(m[1], 10) : null;
+  }
+
+  // ゲストスペース対応の kintone.api 呼び出し（Promise を返す）
+  function kintoneApi(path, method, params) {
+    return kintone.api(kintone.api.url(path, true), method, params);
+  }
+
+  // preview 設定を運用環境へデプロイし、完了状態まで待つ
+  function deployApp(appId) {
+    return kintoneApi("/k/v1/preview/app/deploy.json", "POST", { apps: [{ app: appId }] })
+      .then(function () { return pollDeploy(appId, 0); });
+  }
+
+  function pollDeploy(appId, tries) {
+    return kintoneApi("/k/v1/preview/app/deploy.json", "GET", { apps: [appId] })
+      .then(function (resp) {
+        var st = resp && resp.apps && resp.apps[0] ? resp.apps[0].status : null;
+        if (st === "PROCESSING" && tries < 60) {
+          return delay(1500).then(function () { return pollDeploy(appId, tries + 1); });
+        }
+        return st; // SUCCESS / FAIL / CANCEL / PROCESSING(タイムアウト)
+      });
+  }
+
+  function apiErrorMessage(e) {
+    if (!e) { return "反映エラー"; }
+    if (e.message) { return e.message; }
+    if (e.error) { return e.error; }
+    return String(e);
+  }
+
   function validate(split, panes) {
     for (var i = 0; i < panes.length; i++) {
       var p = panes[i];
@@ -190,6 +234,7 @@
 
   // イベント
   $split.value = config.split;
+  $deploy.checked = config.deployOnSave === true; // 前回の選択を復元
   renderPanes();
   $split.addEventListener("change", renderPanes);
 
@@ -199,11 +244,42 @@
     var err = validate(split, panes);
     if (err) { showMessage(err, "error"); return; }
 
+    var doDeploy = $deploy.checked;
+    $save.disabled = true;
+
     kintone.plugin.app.setConfig(
-      { config: JSON.stringify({ split: split, panes: panes }) },
+      { config: JSON.stringify({ split: split, panes: panes, deployOnSave: doDeploy }) },
       function () {
-        // 成功時は設定一覧へ戻る（setConfig のコールバックが呼ばれれば保存済み）
-        showMessage("保存しました。", "ok");
+        // setConfig のコールバックが呼ばれた時点で preview へ保存済み
+        if (!doDeploy) {
+          showMessage("保存しました。（運用環境へ反映するにはアプリを更新してください）", "ok");
+          $save.disabled = false;
+          return;
+        }
+        var appId = getAppId();
+        if (!appId) {
+          showMessage("保存しましたが、アプリ ID を取得できず運用反映を実行できませんでした。", "error");
+          $save.disabled = false;
+          return;
+        }
+        showMessage("保存しました。運用環境へ反映中…", "note");
+        deployApp(appId)
+          .then(function (status) {
+            if (status === "SUCCESS") {
+              showMessage("保存し、運用環境へ反映しました。", "ok");
+            } else if (status === "FAIL") {
+              showMessage("保存しましたが、運用環境への反映に失敗しました（kintone 側でエラー）。", "error");
+            } else if (status === "CANCEL") {
+              showMessage("保存しましたが、運用環境への反映がキャンセルされました。", "error");
+            } else {
+              // PROCESSING のままタイムアウト
+              showMessage("保存しました。運用環境へ反映を開始しました（反映完了まで少し時間がかかります）。", "ok");
+            }
+          })
+          .catch(function (e) {
+            showMessage("保存しましたが、運用反映でエラー: " + apiErrorMessage(e), "error");
+          })
+          .then(function () { $save.disabled = false; });
       }
     );
   });

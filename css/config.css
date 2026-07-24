@@ -51,6 +51,10 @@
   white-space: pre-wrap; word-break: break-word; max-height: 120px; overflow: auto;
 }
 
+.ksqld-deploy-row { margin: 16px 0 4px; }
+.ksqld-deploy { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+.ksqld-deploy input { width: 16px; height: 16px; }
+
 .ksqld-actions { display: flex; align-items: center; gap: 12px; margin: 8px 0 40px; }
 .ksqld-btn {
   border: 1px solid #c9c9c9; background: #fff; color: #333;

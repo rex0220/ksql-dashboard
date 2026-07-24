@@ -5,6 +5,10 @@
 (function (PLUGIN_ID) {
   "use strict";
 
+  // スクリプト自体が読み込まれたことの確認用（ハンドラ発火前に必ず出る）。
+  // ここが出ない＝desktop.js が未ロード（再アップロード漏れ／モバイル／未適用など）。
+  console.log("kSQL Dashboard: desktop.js loaded; window.ksql=", !!window.ksql);
+
   // 本プラグインが想定する kSQL エンジンのバージョン（UMD レジストリのキー）
   var KSQL_VERSION = "3.19.0";
   var DEFAULT_MAX_RECORDS = 500;
@@ -30,6 +34,19 @@
     return n;
   }
 
+  // 値はすべて文字列。整数/小数のみの文字列を「数値」とみなす。
+  function isNumericString(s) {
+    return typeof s === "string" && /^[+-]?\d+(\.\d+)?$/.test(s.trim());
+  }
+
+  // 3桁区切りを付与（Number 化せず文字列操作＝桁あふれ・大きな ID でも精度を保つ）
+  function formatNumber(s) {
+    var m = /^([+-]?)(\d+)(\.\d+)?$/.exec(String(s).trim());
+    if (!m) { return String(s); }
+    var intPart = m[2].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return m[1] + intPart + (m[3] || "");
+  }
+
   // 表描画
   function renderTable(body, result) {
     var cols = result.columns || [];
@@ -46,7 +63,14 @@
     var tbody = el("tbody");
     rows.forEach(function (row) {
       var tr = el("tr");
-      cols.forEach(function (c) { tr.appendChild(el("td", null, row[c.name] != null ? row[c.name] : "")); });
+      cols.forEach(function (c) {
+        var raw = row[c.name] != null ? row[c.name] : "";
+        if (isNumericString(raw)) {
+          tr.appendChild(el("td", "ksqld-num", formatNumber(raw)));
+        } else {
+          tr.appendChild(el("td", null, raw));
+        }
+      });
       tbody.appendChild(tr);
     });
     table.appendChild(tbody);
@@ -61,7 +85,12 @@
     if (rows.length === 0) { body.appendChild(el("div", "ksqld-note", "0 件")); return; }
 
     var data = rows.map(function (r) {
-      return { label: String(r[labelCol] != null ? r[labelCol] : ""), value: Number(r[valueCol]) || 0 };
+      var rawVal = r[valueCol] != null ? String(r[valueCol]) : "";
+      return {
+        label: String(r[labelCol] != null ? r[labelCol] : ""),
+        value: Number(rawVal) || 0,
+        display: isNumericString(rawVal) ? formatNumber(rawVal) : rawVal
+      };
     });
     var max = data.reduce(function (m, d) { return Math.max(m, d.value); }, 0) || 1;
 
@@ -73,7 +102,7 @@
       fill.style.width = Math.round((d.value / max) * 100) + "%";
       track.appendChild(fill);
       rowEl.appendChild(track);
-      rowEl.appendChild(el("span", "ksqld-bar-value", String(d.value)));
+      rowEl.appendChild(el("span", "ksqld-bar-value", d.display));
       body.appendChild(rowEl);
     });
   }
@@ -122,21 +151,42 @@
     container.appendChild(grid);
   }
 
-  kintone.events.on("app.record.index.show", function (event) {
+  // 一覧のヘッダースペース要素を取得（PC/モバイルの両 API に対応）
+  function getSpaceElement() {
+    if (kintone.app && typeof kintone.app.getHeaderSpaceElement === "function") {
+      var pc = kintone.app.getHeaderSpaceElement();
+      if (pc) { return pc; }
+    }
+    if (kintone.mobile && kintone.mobile.app &&
+        typeof kintone.mobile.app.getHeaderSpaceElement === "function") {
+      return kintone.mobile.app.getHeaderSpaceElement();
+    }
+    return null;
+  }
+
+  function onIndexShow(event) {
+    console.log("kSQL Dashboard: app.record.index.show", event && event.type);
     var config = loadConfig();
     if (!config || !Array.isArray(config.panes) || config.panes.length === 0) {
+      console.log("kSQL Dashboard: 設定が未保存のため描画しません。");
       return event; // 未設定なら何もしない
+    }
+    var space = getSpaceElement();
+    if (!space) {
+      console.log("kSQL Dashboard: ヘッダースペース要素が取得できません（このビューでは描画不可）。");
+      return event;
     }
     // 既存のダッシュボードを除去してから描画（一覧の再表示に対応）
     var existing = document.getElementById("ksqld-dashboard");
-    if (existing) { existing.parentNode.removeChild(existing); }
+    if (existing && existing.parentNode) { existing.parentNode.removeChild(existing); }
 
     var container = el("div", "ksqld-dashboard");
     container.id = "ksqld-dashboard";
     renderDashboard(container, config);
-
-    var space = kintone.app.getHeaderSpaceElement();
-    if (space) { space.appendChild(container); }
+    space.appendChild(container);
     return event;
-  });
+  }
+
+  // PC・モバイル両方の一覧表示イベントに登録
+  kintone.events.on(["app.record.index.show", "mobile.app.record.index.show"], onIndexShow);
 })(kintone.$PLUGIN_ID);

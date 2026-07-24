@@ -6,7 +6,7 @@
     <select id="ksqld-split" class="ksqld-select">
       <option value="1">1 分割（単一）</option>
       <option value="2">2 分割（横2）</option>
-      <option value="3">3 分割（横3）</option>
+      <option value="3">3 分割（上2・下1）</option>
       <option value="4">4 分割（2×2）</option>
     </select>
     <p class="ksqld-hint">分割数に応じて、下の「ペイン一覧」の数が変わります。</p>
@@ -16,6 +16,14 @@
     <h3 class="ksqld-subtitle">ペイン一覧</h3>
     <div id="ksqld-panes" class="ksqld-panes"><!-- config.js が生成 --></div>
   </section>
+
+  <div class="ksqld-deploy-row">
+    <label class="ksqld-deploy">
+      <input type="checkbox" id="ksqld-deploy" />
+      運用環境に反映（保存後に「アプリを更新」まで自動実行）
+    </label>
+    <p class="ksqld-hint">オフの場合は設定の保存のみ。反映には別途アプリの更新が必要です。</p>
+  </div>
 
   <div class="ksqld-actions">
     <button id="ksqld-save" class="ksqld-btn ksqld-btn-primary" type="button">保存</button>
