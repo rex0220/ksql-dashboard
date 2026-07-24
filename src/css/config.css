@@ -82,9 +82,10 @@
 .ksqld-config .ksqld-icon-btn { padding: 0 12px; }
 .ksqld-icon { width: 14px; height: 14px; vertical-align: -2px; margin-right: 4px; }
 
-/* 注意色ボタン（複写・入れ替えなど上書きを伴う操作） */
-.ksqld-btn-caution { border-color: #e0b050; color: #8a6d3b; background: #fcf6e9; }
-.ksqld-btn-caution:hover { background: #f6ebcf; }
+/* 注意色ボタン（複写・入れ替えなど上書きを伴う操作）。
+   白ボタンと見分けが付くよう、枠・背景をはっきりした黄系にする */
+.ksqld-btn-caution { border-color: #d9a13c; color: #7a5a1c; background: #faeed2; }
+.ksqld-btn-caution:hover { background: #f3e2b8; }
 
 /* 複写・入れ替えダイアログ */
 .ksqld-modal {
@@ -103,6 +104,7 @@
 .ksqld-modal-subtitle { font-size: 14px; margin: 0 0 8px; padding-left: 8px; border-left: 4px solid #3498db; }
 .ksqld-modal-row { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
 .ksqld-modal-row > span { font-size: 13px; align-self: center; }
+.ksqld-modal-text { font-size: 13px; margin: 0 0 8px; }
 
 /* プレビュー（実データのダッシュボードを表示）は画面いっぱいの横幅に */
 #ksqld-preview-modal { padding: 24px 12px; }
