@@ -1,16 +1,33 @@
 /* kSQL Dashboard — 設定画面ロジック
- * 画面分割数(1-4)と、ペインごとの SQL・表示方法(表/グラフ)を設定し、
+ * 一覧（ビュー）ごとにダッシュボード（画面分割数＋ペインの SQL・表示方法）を設定し、
  * kintone.plugin.app.setConfig で保存する。
+ *
+ * 設定データ構造:
+ *   {
+ *     deployOnSave: boolean,
+ *     dashboards: {
+ *       "__default__": { split, panes },   // 個別設定の無い一覧に適用
+ *       "<viewId>":    { split, panes }     // その一覧専用
+ *     }
+ *   }
  */
 (function (PLUGIN_ID) {
   "use strict";
 
   var MAX_PANES = 4;
+  var DEFAULT_KEY = "__default__"; // 既定ダッシュボードのキー
   // desktop.js と同じく UMD レジストリから明示バージョンで取得する
   var KSQL_VERSION = "3.19.0";
   // SHOW/DESCRIBE 検証時の取得上限（メタデータなので小さくてよい）
   var VALIDATE_MAX_RECORDS = 100;
 
+  var $view = document.getElementById("ksqld-view");
+  var $enabled = document.getElementById("ksqld-enabled");
+  var $enabledText = document.getElementById("ksqld-enabled-text");
+  var $sourceRow = document.getElementById("ksqld-source-row");
+  var $source = document.getElementById("ksqld-source");
+  var $commonNote = document.getElementById("ksqld-common-note");
+  var $editor = document.getElementById("ksqld-editor");
   var $split = document.getElementById("ksqld-split");
   var $panes = document.getElementById("ksqld-panes");
   var $save = document.getElementById("ksqld-save");
@@ -19,14 +36,48 @@
   var $template = document.getElementById("ksqld-pane-template");
   var $deploy = document.getElementById("ksqld-deploy");
 
-  // 既存設定の読込
-  var saved = kintone.plugin.app.getConfig(PLUGIN_ID);
-  var config = { split: "1", panes: [] };
-  if (saved && saved.config) {
-    try { config = JSON.parse(saved.config); } catch (e) { /* 破損時は初期値 */ }
+  // --- 設定の読込と正規化（旧形式 { split, panes } からの移行を含む）---------
+  function normalizeSplit(s) {
+    return ["1", "2", "3", "4"].indexOf(String(s)) !== -1 ? String(s) : "1";
   }
-  if (!Array.isArray(config.panes)) { config.panes = []; }
-  if (["1", "2", "3", "4"].indexOf(String(config.split)) === -1) { config.split = "1"; }
+
+  function normalizeConfig(raw) {
+    var cfg = { deployOnSave: false, dashboards: {} };
+    if (!raw || typeof raw !== "object") { return cfg; }
+    cfg.deployOnSave = raw.deployOnSave === true;
+    if (raw.dashboards && typeof raw.dashboards === "object") {
+      Object.keys(raw.dashboards).forEach(function (k) {
+        cfg.dashboards[k] = normalizeDash(k, raw.dashboards[k]);
+      });
+    } else if (Array.isArray(raw.panes)) {
+      // 旧形式（単一ダッシュボード）→ 共通へ移行
+      cfg.dashboards[DEFAULT_KEY] = { enabled: true, split: normalizeSplit(raw.split), panes: raw.panes };
+    }
+    return cfg;
+  }
+
+  // 1ダッシュボードの正規化。共通(__default__)は {enabled,split,panes}、
+  // 一覧別は {enabled, source:"common"|"individual", split, panes}。
+  function normalizeDash(key, d) {
+    d = d || {};
+    var panes = Array.isArray(d.panes) ? d.panes : [];
+    if (key === DEFAULT_KEY) {
+      return { enabled: d.enabled !== false, split: normalizeSplit(d.split), panes: panes };
+    }
+    // source 未指定の旧データは、ペインがあれば個別・無ければ共通とみなす
+    var source = d.source === "individual" ? "individual"
+      : d.source === "common" ? "common"
+      : (panes.length ? "individual" : "common");
+    return { enabled: d.enabled !== false, source: source, split: normalizeSplit(d.split), panes: panes };
+  }
+
+  function readSavedConfig() {
+    var saved = kintone.plugin.app.getConfig(PLUGIN_ID);
+    if (saved && saved.config) {
+      try { return JSON.parse(saved.config); } catch (e) { /* 破損時は初期値 */ }
+    }
+    return null;
+  }
 
   // kSQL エンジンの取得（config 画面にも UMD を読み込み済み・未読込なら null）
   function getEngine() {
@@ -145,15 +196,48 @@
     return card;
   }
 
-  // 分割数に応じてペインフォームを描画（入力中の値は保持）
-  function renderPanes() {
-    var count = parseInt($split.value, 10) || 1;
-    var current = collectPanes(); // 画面上の入力を退避
+  // 指定枚数のペインフォームを描画
+  function buildCards(panes, count) {
     $panes.innerHTML = "";
     for (var i = 0; i < count && i < MAX_PANES; i++) {
-      var pane = current[i] || config.panes[i] || {};
-      $panes.appendChild(buildPaneCard(i, pane));
+      $panes.appendChild(buildPaneCard(i, panes[i] || {}));
     }
+  }
+
+  // 分割数変更時：画面上の入力を保持して枚数だけ増減
+  function onSplitChange() {
+    buildCards(collectPanes(), parseInt($split.value, 10) || 1);
+  }
+
+  // 対象ビュー種別（共通/一覧別）と有効/共通・個別に応じて UI を切り替え
+  function updateModeUI() {
+    var isDefault = currentKey === DEFAULT_KEY;
+    $enabledText.textContent = isDefault
+      ? "共通ダッシュボードを有効にする（すべての一覧に表示）"
+      : "この一覧でダッシュボードを表示する";
+    $sourceRow.hidden = isDefault; // 共通(既定)は「共通/個別」選択を出さない
+
+    var showEditor, showCommonNote;
+    if (isDefault) {
+      showEditor = true; showCommonNote = false;           // 共通は常に内容を編集
+    } else if (!$enabled.checked) {
+      showEditor = false; showCommonNote = false;           // 非表示
+    } else if ($source.value === "individual") {
+      showEditor = true; showCommonNote = false;            // 個別を編集
+    } else {
+      showEditor = false; showCommonNote = true;            // 共通を表示（編集は共通側）
+    }
+    $editor.hidden = !showEditor;
+    $commonNote.hidden = !showCommonNote;
+  }
+
+  // 指定ダッシュボードをエディタへ読み込む（画面の入力は破棄して置換）
+  function loadEditor(dash) {
+    $enabled.checked = dash.enabled !== false;
+    $source.value = dash.source === "individual" ? "individual" : "common";
+    $split.value = normalizeSplit(dash.split);
+    buildCards(dash.panes || [], parseInt($split.value, 10) || 1);
+    updateModeUI();
   }
 
   // 画面上のペイン入力を配列で収集
@@ -221,9 +305,104 @@
     return String(e);
   }
 
+  // --- ビュー一覧（設定対象の選択肢）--------------------------------------
+  // preview のビュー一覧を取得（一覧系＝LIST／CUSTOM。未デプロイのビューも拾える）
+  function fetchViews(appId) {
+    return kintoneApi("/k/v1/preview/app/views.json", "GET", { app: appId })
+      .then(function (resp) {
+        var views = resp && resp.views ? resp.views : {};
+        var list = [];
+        Object.keys(views).forEach(function (name) {
+          var v = views[name];
+          if (v && (v.type === "LIST" || v.type === "CUSTOM")) {
+            list.push({ id: String(v.id), name: v.name || name, type: v.type,
+              index: typeof v.index === "string" ? parseInt(v.index, 10) : (v.index || 0) });
+          }
+        });
+        list.sort(function (a, b) { return a.index - b.index; });
+        return list;
+      });
+  }
+
+  // ビュー選択セレクトを再構築（既定＋一覧系ビュー＋設定はあるが一覧に無いキー）
+  function populateViews(list) {
+    var prev = currentKey;
+    viewsById = {};
+    $view.innerHTML = "";
+    $view.appendChild(new Option("すべての一覧（既定）", DEFAULT_KEY));
+    list.forEach(function (v) {
+      viewsById[v.id] = v;
+      var label = v.type === "CUSTOM" ? v.name + "（カスタマイズ）" : v.name;
+      $view.appendChild(new Option(label, v.id));
+    });
+    Object.keys(dashboards).forEach(function (k) {
+      if (k !== DEFAULT_KEY && !viewsById[k]) {
+        $view.appendChild(new Option("(不明なビュー " + k + ")", k));
+      }
+    });
+    $view.value = prev; // 選択を維持
+  }
+
+  function keyLabel(key) {
+    if (key === DEFAULT_KEY) { return "すべての一覧（既定）"; }
+    return viewsById[key] ? viewsById[key].name : ("ビュー " + key);
+  }
+
+  // --- ダッシュボード（ビュー別）状態管理 ---------------------------------
+  // 新規の一覧別エントリは「有効・共通」（＝共通を継承）。未編集なら保存時に整理される。
+  function ensureDash(key) {
+    if (!dashboards[key]) {
+      dashboards[key] = key === DEFAULT_KEY
+        ? { enabled: true, split: "1", panes: [] }
+        : { enabled: true, source: "common", split: "1", panes: [] };
+    }
+    return dashboards[key];
+  }
+
+  // 現在のエディタ内容を state へ退避
+  function stashEditor() {
+    if (currentKey === DEFAULT_KEY) {
+      dashboards[currentKey] = {
+        enabled: $enabled.checked,
+        split: normalizeSplit($split.value),
+        panes: collectPanes()
+      };
+    } else {
+      dashboards[currentKey] = {
+        enabled: $enabled.checked,
+        source: $source.value === "individual" ? "individual" : "common",
+        split: normalizeSplit($split.value),
+        panes: collectPanes()
+      };
+    }
+  }
+
+  // ビューを選んだだけ（未編集）の空エントリを削除し、既定へフォールバックさせる。
+  // 一方、ユーザーが操作した（touched）エントリは、たとえ空・無効でも意図（＝この一覧では
+  // 表示しない）として残す。既定は常に残す。
+  function pruneUntouchedEmpty() {
+    Object.keys(dashboards).forEach(function (k) {
+      if (k === DEFAULT_KEY) { return; }
+      var d = dashboards[k];
+      var empty = !(d.panes && d.panes.length);
+      if (empty && !touched[k]) { delete dashboards[k]; }
+    });
+  }
+
+  function markTouched() { touched[currentKey] = true; }
+
+  // 対象ビューを切り替え（編集中の内容は退避してから読み込む）
+  function switchView(newKey) {
+    stashEditor();
+    currentKey = newKey;
+    loadEditor(ensureDash(currentKey));
+    showMessage("", "");
+  }
+
   function validate(split, panes) {
-    for (var i = 0; i < panes.length; i++) {
-      var p = panes[i];
+    var active = (panes || []).slice(0, parseInt(normalizeSplit(split), 10) || 1);
+    for (var i = 0; i < active.length; i++) {
+      var p = active[i];
       if (!p.sql) { return "ペイン " + (i + 1) + " の SQL が未入力です。"; }
       if (p.display === "chart" && (!p.labelColumn || !p.valueColumn)) {
         return "ペイン " + (i + 1) + " のグラフはラベル列・値列の指定が必要です。";
@@ -232,23 +411,66 @@
     return null;
   }
 
-  // イベント
-  $split.value = config.split;
+  // 実際に表示されるダッシュボードだけ検証する（共通=有効時 / 一覧別=有効かつ個別時）。
+  // 最初のエラーを { key, err } で返す（無ければ null）。
+  function validateAll() {
+    var keys = Object.keys(dashboards);
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      var d = dashboards[k];
+      if (d.enabled === false) { continue; }
+      if (k !== DEFAULT_KEY && d.source !== "individual") { continue; } // 共通表示は共通側で検証
+      var err = validate(d.split, d.panes);
+      if (err) { return { key: k, err: err }; }
+    }
+    return null;
+  }
+
+  // --- 初期化 -------------------------------------------------------------
+  var config = normalizeConfig(readSavedConfig());
+  var dashboards = config.dashboards;
+  var currentKey = DEFAULT_KEY;
+  var viewsById = {};
+  // 保存済みのエントリは意図的なものとして touched 扱い（空・無効でも残す）
+  var touched = {};
+  Object.keys(dashboards).forEach(function (k) { touched[k] = true; });
+  ensureDash(DEFAULT_KEY);
+
   $deploy.checked = config.deployOnSave === true; // 前回の選択を復元
-  renderPanes();
-  $split.addEventListener("change", renderPanes);
+  populateViews([]);                               // まず既定のみ（取得後に差し替え）
+  loadEditor(ensureDash(currentKey));
+  $split.addEventListener("change", function () { markTouched(); onSplitChange(); });
+  $enabled.addEventListener("change", function () { markTouched(); updateModeUI(); });
+  $source.addEventListener("change", function () { markTouched(); updateModeUI(); });
+  // ペインの入力・選択変更で touched（動的生成のカードはイベント委譲で拾う）
+  $panes.addEventListener("input", markTouched);
+  $panes.addEventListener("change", markTouched);
+  $view.addEventListener("change", function () { switchView($view.value); });
+
+  // ビュー一覧を取得してセレクトへ反映（失敗しても既定で続行）
+  var appIdForViews = getAppId();
+  if (appIdForViews) {
+    fetchViews(appIdForViews).then(populateViews).catch(function (e) {
+      console.log("kSQL Dashboard 設定: ビュー一覧の取得に失敗しました:", apiErrorMessage(e));
+    });
+  }
 
   $save.addEventListener("click", function () {
-    var split = $split.value;
-    var panes = collectPanes();
-    var err = validate(split, panes);
-    if (err) { showMessage(err, "error"); return; }
+    stashEditor();             // 現在の編集内容を確定
+    pruneUntouchedEmpty();     // 選んだだけの空エントリを削除
+
+    var bad = validateAll();
+    if (bad) {
+      if (bad.key !== currentKey) { $view.value = bad.key; switchView(bad.key); }
+      showMessage("「" + keyLabel(bad.key) + "」: " + bad.err, "error");
+      return;
+    }
 
     var doDeploy = $deploy.checked;
     $save.disabled = true;
 
     kintone.plugin.app.setConfig(
-      { config: JSON.stringify({ split: split, panes: panes, deployOnSave: doDeploy }) },
+      { config: JSON.stringify({ dashboards: dashboards, deployOnSave: doDeploy }) },
       function () {
         // setConfig のコールバックが呼ばれた時点で preview へ保存済み
         if (!doDeploy) {

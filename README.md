@@ -104,16 +104,33 @@ KINTONE_PASSWORD=your-password
 
 ## 設定データ構造（getConfig / setConfig）
 
+共通ダッシュボード（`__default__`＝すべての一覧）と一覧別（キー＝`viewId`）を持つ。一覧別は `enabled`（表示可否）と `source`（`common`＝共通を表示／`individual`＝この一覧専用）で表示を決める。表示時は `app.record.index.show` の `event.viewId` で選択する。
+
 ```json
 {
-  "split": "2",
-  "panes": [
-    { "title": "月次売上", "sql": "SELECT ...", "display": "table" },
-    { "title": "担当別件数", "sql": "SELECT 担当, COUNT(*) AS 件数 FROM APP100 GROUP BY 担当",
-      "display": "chart", "labelColumn": "担当", "valueColumn": "件数" }
-  ]
+  "deployOnSave": false,
+  "dashboards": {
+    "__default__": {
+      "enabled": true,
+      "split": "1",
+      "panes": [ { "title": "全体", "sql": "SELECT ...", "display": "table" } ]
+    },
+    "5000123": {
+      "enabled": true,
+      "source": "individual",
+      "split": "2",
+      "panes": [
+        { "title": "月次売上", "sql": "SELECT ...", "display": "table" },
+        { "title": "担当別件数", "sql": "SELECT 担当, COUNT(*) AS 件数 FROM APP100 GROUP BY 担当",
+          "display": "chart", "labelColumn": "担当", "valueColumn": "件数" }
+      ]
+    }
+  }
 }
 ```
+
+- 一覧別エントリなし → **共通を継承**（共通が有効なら表示）。`source:"common"` も共通を表示。`enabled:false` はその一覧で非表示。
+- 旧形式 `{ split, panes }` は `dashboards.__default__`（共通）へ自動移行する。
 
 ## 制約・注意（サンプル）
 

@@ -38,16 +38,48 @@ ksql-dashboard/
   - グラフは**依存なしのインライン SVG 風・横棒**（外部ライブラリ不要＝CSP 安全）。
 
 ### 設定データ構造
+「共通ダッシュボード（すべての一覧）」＝ `__default__` と、一覧別（キー＝`viewId` 文字列）を持つ。
+一覧別は **`source`（`"common"`＝共通を表示 / `"individual"`＝この一覧専用）** と `enabled` の2軸で
+表示を決める。`app.record.index.show` の `event.viewId` で選択する。
 ```json
 {
-  "split": "2",
-  "panes": [
-    { "title": "月次売上", "sql": "SELECT ...", "display": "table" },
-    { "title": "担当別件数", "sql": "SELECT 担当, COUNT(*) AS 件数 FROM APP100 GROUP BY 担当",
-      "display": "chart", "labelColumn": "担当", "valueColumn": "件数" }
-  ]
+  "deployOnSave": false,
+  "dashboards": {
+    "__default__": {                              // 共通（すべての一覧）
+      "enabled": true,
+      "split": "1",
+      "panes": [ { "title": "全体", "sql": "SELECT ...", "display": "table" } ]
+    },
+    "5000123": {                                  // 一覧別
+      "enabled": true,
+      "source": "individual",
+      "split": "2",
+      "panes": [
+        { "title": "月次売上", "sql": "SELECT ...", "display": "table" },
+        { "title": "担当別件数", "sql": "SELECT 担当, COUNT(*) AS 件数 FROM APP100 GROUP BY 担当",
+          "display": "chart", "labelColumn": "担当", "valueColumn": "件数" }
+      ]
+    }
+  }
 }
 ```
+**表示ロジック（`desktop.js` の `pickDashboard`）**:
+- 一覧別エントリあり: `enabled:false`→非表示 / `source:"individual"`→専用（ペインがあれば） /
+  `source:"common"`→共通（共通が有効なら）。
+- 一覧別エントリなし: **共通を継承**（共通が有効かつペインありなら表示）。
+- 共通が無効（`__default__.enabled:false`）だと、共通を出す一覧（共通指定・未設定）は全て非表示。
+  個別指定の一覧は影響を受けない。
+
+**設定画面**:
+- 対象ビュー選択の横に「この一覧でダッシュボードを表示する」（＝`enabled`）。共通選択時は
+  「共通ダッシュボードを有効にする」ラベルに変わる。
+- 一覧別を選ぶと「表示するダッシュボード＝共通／個別」（`source`）を選べる。個別のときだけペイン編集欄を表示。
+- 対象ビュー一覧は preview の `views.json` から **LIST／CUSTOM（カスタマイズ一覧）**を取得。
+- 「選んだだけ（未編集）の空エントリ」は保存時に削除（`pruneUntouchedEmpty`）。操作した（touched）
+  エントリは空・無効でも意図として残す。
+
+> **移行**: 旧形式 `{ split, panes }` は `dashboards.__default__`（共通）へ、`source` 欠落の一覧別旧データは
+> ペイン有無で individual/common を推定して移行する（`normalizeConfig`/`normalizeDash`）。
 
 ## 3. B66（kSQL エンジン・ライブラリ）API 契約【重要・自己完結】
 

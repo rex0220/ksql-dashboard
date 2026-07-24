@@ -2,20 +2,45 @@
   <h2 class="ksqld-title">kSQL Dashboard 設定</h2>
 
   <section class="ksqld-section">
-    <label class="ksqld-label" for="ksqld-split">画面分割数</label>
-    <select id="ksqld-split" class="ksqld-select">
-      <option value="1">1 分割（単一）</option>
-      <option value="2">2 分割（横2）</option>
-      <option value="3">3 分割（上2・下1）</option>
-      <option value="4">4 分割（2×2）</option>
-    </select>
-    <p class="ksqld-hint">分割数に応じて、下の「ペイン一覧」の数が変わります。</p>
+    <label class="ksqld-label" for="ksqld-view">対象の一覧（ビュー）</label>
+    <div class="ksqld-view-row">
+      <select id="ksqld-view" class="ksqld-select">
+        <option value="__default__">すべての一覧（共通）</option>
+      </select>
+      <label class="ksqld-deploy ksqld-enabled-label">
+        <input type="checkbox" id="ksqld-enabled" />
+        <span id="ksqld-enabled-text">この一覧でダッシュボードを表示する</span>
+      </label>
+    </div>
+    <p class="ksqld-hint">一覧ごとにダッシュボードを設定できます。「すべての一覧（共通）」は、個別設定の無い一覧に共通で表示されます。カスタマイズ一覧も選べます。</p>
   </section>
 
-  <section class="ksqld-section">
-    <h3 class="ksqld-subtitle">ペイン一覧</h3>
-    <div id="ksqld-panes" class="ksqld-panes"><!-- config.js が生成 --></div>
+  <section id="ksqld-source-row" class="ksqld-section" hidden>
+    <label class="ksqld-label" for="ksqld-source">表示するダッシュボード</label>
+    <select id="ksqld-source" class="ksqld-select">
+      <option value="common">共通（すべての一覧）</option>
+      <option value="individual">個別（この一覧専用）</option>
+    </select>
+    <p id="ksqld-common-note" class="ksqld-hint" hidden>この一覧では共通ダッシュボードを表示します。内容は「すべての一覧（共通）」で編集してください。</p>
   </section>
+
+  <div id="ksqld-editor" class="ksqld-editor">
+    <section class="ksqld-section">
+      <label class="ksqld-label" for="ksqld-split">画面分割数</label>
+      <select id="ksqld-split" class="ksqld-select">
+        <option value="1">1 分割（単一）</option>
+        <option value="2">2 分割（横2）</option>
+        <option value="3">3 分割（上2・下1）</option>
+        <option value="4">4 分割（2×2）</option>
+      </select>
+      <p class="ksqld-hint">分割数に応じて、下の「ペイン一覧」の数が変わります。</p>
+    </section>
+
+    <section class="ksqld-section">
+      <h3 class="ksqld-subtitle">ペイン一覧</h3>
+      <div id="ksqld-panes" class="ksqld-panes"><!-- config.js が生成 --></div>
+    </section>
+  </div>
 
   <div class="ksqld-deploy-row">
     <label class="ksqld-deploy">

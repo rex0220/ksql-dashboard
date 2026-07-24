@@ -13,10 +13,69 @@
   var KSQL_VERSION = "3.19.0";
   var DEFAULT_MAX_RECORDS = 500;
 
+  var DEFAULT_KEY = "__default__"; // 既定ダッシュボードのキー
+
   function loadConfig() {
     var saved = kintone.plugin.app.getConfig(PLUGIN_ID);
     if (!saved || !saved.config) { return null; }
     try { return JSON.parse(saved.config); } catch (e) { return null; }
+  }
+
+  function normalizeSplit(s) {
+    return ["1", "2", "3", "4"].indexOf(String(s)) !== -1 ? String(s) : "1";
+  }
+
+  // 設定を正規化（旧形式 { split, panes } は既定ダッシュボードへ移行）
+  function normalizeConfig(raw) {
+    var cfg = { dashboards: {} };
+    if (!raw || typeof raw !== "object") { return cfg; }
+    if (raw.dashboards && typeof raw.dashboards === "object") {
+      Object.keys(raw.dashboards).forEach(function (k) {
+        var d = raw.dashboards[k] || {};
+        var panes = Array.isArray(d.panes) ? d.panes : [];
+        if (k === DEFAULT_KEY) {
+          cfg.dashboards[k] = { enabled: d.enabled !== false, split: normalizeSplit(d.split), panes: panes };
+        } else {
+          var source = d.source === "individual" ? "individual"
+            : d.source === "common" ? "common"
+            : (panes.length ? "individual" : "common"); // 旧データ互換
+          cfg.dashboards[k] = {
+            enabled: d.enabled !== false, source: source,
+            split: normalizeSplit(d.split), panes: panes
+          };
+        }
+      });
+    } else if (Array.isArray(raw.panes)) {
+      cfg.dashboards[DEFAULT_KEY] = { enabled: true, split: normalizeSplit(raw.split), panes: raw.panes };
+    }
+    return cfg;
+  }
+
+  // 共通ダッシュボードが表示可能か（有効かつペインあり）
+  function commonUsable(config) {
+    var c = (config.dashboards || {})[DEFAULT_KEY];
+    return !!c && c.enabled !== false && (c.panes || []).length > 0;
+  }
+
+  // 表示中ビューに対応するダッシュボードを選ぶ。
+  //  - 一覧別設定あり: 無効→非表示 / source=individual→専用（ペインがあれば） / source=common→共通
+  //  - 一覧別設定なし: 共通を継承（共通が有効なら）
+  function pickDashboard(config, event) {
+    var dashboards = config.dashboards || {};
+    var common = dashboards[DEFAULT_KEY];
+    var vid = event && event.viewId != null ? String(event.viewId) : null;
+    var entry = vid ? dashboards[vid] : null;
+
+    if (entry) {
+      if (entry.enabled === false) { return null; }        // この一覧では非表示
+      if (entry.source === "individual") {
+        return (entry.panes || []).length ? entry : null;  // 個別
+      }
+      // source === "common"
+      return commonUsable(config) ? common : null;
+    }
+    // 一覧別設定なし → 共通を継承
+    return commonUsable(config) ? common : null;
   }
 
   // kSQL エンジンの取得（未読込なら null）
@@ -127,10 +186,10 @@
       });
   }
 
-  function renderDashboard(container, config) {
+  function renderDashboard(container, dash) {
     container.innerHTML = "";
-    var split = String(config.split || "1");
-    var panes = (config.panes || []).slice(0, parseInt(split, 10) || 1);
+    var split = normalizeSplit(dash.split);
+    var panes = (dash.panes || []).slice(0, parseInt(split, 10) || 1);
 
     var grid = el("div", "ksqld-grid");
     grid.setAttribute("data-split", split);
@@ -165,24 +224,27 @@
   }
 
   function onIndexShow(event) {
-    console.log("kSQL Dashboard: app.record.index.show", event && event.type);
-    var config = loadConfig();
-    if (!config || !Array.isArray(config.panes) || config.panes.length === 0) {
-      console.log("kSQL Dashboard: 設定が未保存のため描画しません。");
-      return event; // 未設定なら何もしない
+    var config = normalizeConfig(loadConfig());
+    var dash = pickDashboard(config, event);
+
+    // 既存のダッシュボードは常に除去（対象ビュー切替でも消えるように）
+    var existing = document.getElementById("ksqld-dashboard");
+    if (existing && existing.parentNode) { existing.parentNode.removeChild(existing); }
+
+    if (!dash) {
+      console.log("kSQL Dashboard: このビュー(viewId=" + (event && event.viewId) +
+        ")向けのダッシュボード設定がありません。");
+      return event; // このビュー用も既定も無ければ何もしない
     }
     var space = getSpaceElement();
     if (!space) {
       console.log("kSQL Dashboard: ヘッダースペース要素が取得できません（このビューでは描画不可）。");
       return event;
     }
-    // 既存のダッシュボードを除去してから描画（一覧の再表示に対応）
-    var existing = document.getElementById("ksqld-dashboard");
-    if (existing && existing.parentNode) { existing.parentNode.removeChild(existing); }
 
     var container = el("div", "ksqld-dashboard");
     container.id = "ksqld-dashboard";
-    renderDashboard(container, config);
+    renderDashboard(container, dash);
     space.appendChild(container);
     return event;
   }
