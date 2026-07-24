@@ -7,8 +7,8 @@
 ## 0. まず把握すること
 
 - 本プロジェクトは **kintone プラグイン（サンプル）**。レコード一覧画面に、kSQL(SQL方言)で取得したデータを **1〜4 分割ダッシュボード**として表・グラフ表示する。
-- データ取得は **kSQL エンジン read-only ライブラリ（別プロジェクト「B66」）** の公開 API を使う。**B66 は現在開発中で未リリース**のため、本リポジトリには**プレースホルダ UMD**（`js/ksql-engine.umd.js`）を同梱しており、サンプルデータを返す。B66 リリース後に実物へ差し替える。
-- 現状は**雛形が完成しコミット済み**（git 初期化済み）。設定画面・レイアウト・表/グラフ描画は動作する（プレースホルダのサンプルデータで）。
+- データ取得は **kSQL エンジン read-only ライブラリ（別プロジェクト「B66」）** の公開 API を使う。**実物ビルド v3.19.0 を `js/ksql-engine.umd.js` に同梱済み**（`@rex0220/kintone-sql-tools` の `dist-engine/ksql-engine.umd.js` をコピー）。
+- 現状は雛形＋SQL 検証機能がコミット済み。設定画面・レイアウト・表/グラフ描画・SQL 検証が実エンジンで動作する。
 
 ## 1. ディレクトリ構成と各ファイルの役割
 
@@ -19,7 +19,7 @@ ksql-dashboard/
 ├── html/config.html       設定画面 UI（分割選択＋ペイン一覧＋<template>）
 ├── js/config.js           設定ロジック（getConfig/setConfig・ペイン動的生成・検証）
 ├── js/desktop.js          ダッシュボード描画（config読込→grid→runQuery→表/グラフ）
-├── js/ksql-engine.umd.js  ★B66 プレースホルダ（差し替え対象・サンプルデータ返却）
+├── js/ksql-engine.umd.js  B66 実物ビルド v3.19.0（親リポジトリ dist-engine からコピー）
 ├── css/config.css
 ├── css/desktop.css
 ├── image/icon.png         48x48 プレースホルダ（要差し替え）
@@ -69,8 +69,12 @@ var result = await engine.runQuery(sql, {
   // fetchParallel, cursorMaxActive(1-5), onLimitReached("error"|"truncate") も任意
 });
 // 表示用 EXPLAIN
-var plan = await engine.explainQuery(sql, { client: client }); // { lines, text }
+var plan = await engine.explainQuery(sql, { client: client }); // { lines, text, metrics }
 ```
+
+> **注意**: `runQuery` が受ける単文は `SELECT`/`WITH`/`UNION [ALL]`/`SHOW APPS`/`DESCRIBE` だが、
+> **`explainQuery` の対象は `SELECT`/`WITH`/`UNION [ALL]` のみ**。`SHOW`/`DESCRIBE` を explain すると
+> 実行可能な SQL でもエラーになる。設定画面の検証は先頭キーワードで両者を振り分けている（`js/config.js`）。
 
 ### 結果型
 ```ts
@@ -93,17 +97,25 @@ ExplainResult = { type: "explain", lines: string[], text: string, metrics }
 - **read-only 専用**。INSERT/UPDATE/DELETE/UPSERT/APPLY/IMPORT 等は `READ_ONLY_VIOLATION`。
 - **複数プラグインが別バージョンの kSQL を積んでも競合しない**設計（`window.ksql.versions[version]`・上書きしない）。だから `get("3.19.0")` のように**必ずバージョンを明示**する。
 
-## 4. 実物 UMD への差し替え手順（B66 リリース後）
-1. `@rex0220/kintone-sql-tools`（v3.19.0 以降）の **`dist-engine/ksql-engine.umd.js`** を取得。
+## 4. UMD の更新手順（B66 を新版に上げるとき）
+1. `@rex0220/kintone-sql-tools` の **`dist-engine/ksql-engine.umd.js`** を取得（build 済みのもの）。
 2. 本リポジトリの `js/ksql-engine.umd.js` を上書き。
-3. `manifest.json` の `desktop.js` は既に `js/ksql-engine.umd.js` → `js/desktop.js` の順。変更不要。
-4. パッケージ化して実 kintone で確認。
+   ```sh
+   cp ../kintone-sql-tools/dist-engine/ksql-engine.umd.js js/ksql-engine.umd.js
+   ```
+3. **版を上げた場合は `KSQL_VERSION` を両方更新する**（`js/desktop.js` と `js/config.js`）。UMD は
+   `window.ksql.versions[<版>]` に登録するため、定数がずれると `get()` が `undefined` になり
+   「kSQL エンジン未読込」表示になる。
+4. `manifest.json` の読み込み順は `js/ksql-engine.umd.js` → `js/desktop.js`（config も同様）。変更不要。
+5. `npm run package` して実 kintone で確認。
 
-> B66 は親リポジトリ `kintone-sql-tools` の `feat/b66-engine-library-phase1` ブランチで実装中（Step 1-2 完了・read-only 二重強制ほか進行中）。リリースまでは本プレースホルダで開発を進めてよい。
+> 現在同梱しているのは **v3.19.0**。仕様は親リポジトリ `docs/ksql_engine_library.md` が正。
 
 ## 5. 開発の進め方
 
-- **動作確認**: プレースホルダがサンプルデータ（区分/件数/金額）を返すので、設定→レイアウト→表/グラフ描画を実 kintone で確認できる。グラフ確認は `labelColumn=区分`, `valueColumn=件数` を設定。
+- **動作確認**: 実エンジン同梱済みのため、実 kintone 上で実アプリに対して SQL を実行して確認する。
+  例: `SELECT 担当, COUNT(*) AS 件数 FROM APP100 GROUP BY 担当` を設定し、グラフなら `labelColumn=担当`, `valueColumn=件数`。
+  設定画面の「検証」ボタンで保存前に構文チェックできる（`SELECT`/`WITH`/`UNION` は `explainQuery`、`SHOW`/`DESCRIBE` は軽量 `runQuery`）。
 - **パッケージ化**（kintone 標準 `cli-kintone` を使用。成果物は `dist/` 配下）:
   ```sh
   npm run package        # scripts/package.js: 鍵が無ければ keygen → plugin pack で dist/ksql-dashboard.zip
@@ -131,7 +143,7 @@ ExplainResult = { type: "explain", lines: string[], text: string, metrics }
 - **CSP**: kintone プラグインは外部 CDN スクリプトを読めない。ライブラリ追加は避け、必要なら同梱＋自前実装（現状グラフは自前 SVG）。
 - **値は文字列**: B66 の仕様。数値・日付は表示側で解釈する。
 - **kintone プラグイン規約**: `kintone.$PLUGIN_ID` で PLUGIN_ID を受ける（config.js/desktop.js は IIFE で受領済み）。設定は `kintone.plugin.app.getConfig/setConfig`。
-- **manifest 参照ファイルは実在必須**: 参照先が無いと plugin-packer が失敗する（`js/ksql-engine.umd.js` はプレースホルダを常に置いておく）。
+- **manifest 参照ファイルは実在必須**: 参照先が無いと pack が失敗する（`js/ksql-engine.umd.js` は常に配置しておく）。
 - **コミット単位**: 機能ごとに小さく。`*.zip`/`*.ppk`/`node_modules` は `.gitignore` 済み。
 
 ## 8. 作業開始時のチェックリスト

@@ -9,7 +9,7 @@ kintone プラグイン（サンプル）。レコード一覧画面に、kSQL(r
 ## 要点（詳細は handoff.md）
 
 - データ取得は B66（kSQL read-only ライブラリ）の `window.ksql.get("3.19.0").runQuery(sql, {client})` に配線済み。
-- **B66 は未リリース**のため `js/ksql-engine.umd.js` は**プレースホルダ**（サンプルデータ返却）。リリース後に実物へ差し替える。
+- `js/ksql-engine.umd.js` は **B66 実物ビルド（v3.19.0）を同梱済み**（`@rex0220/kintone-sql-tools` の `dist-engine/ksql-engine.umd.js`）。更新時は同ファイルを再コピーする。
 - 値は**すべて文字列**・**read-only 専用**（DML は `READ_ONLY_VIOLATION`）。
 - CSP のため外部 CDN 不可（グラフは自前 SVG）。
 - 独立 git リポジトリ。`*.zip`/`*.ppk`/`node_modules` は `.gitignore` 済み。

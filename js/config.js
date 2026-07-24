@@ -8,6 +8,8 @@
   var MAX_PANES = 4;
   // desktop.js と同じく UMD レジストリから明示バージョンで取得する
   var KSQL_VERSION = "3.19.0";
+  // SHOW/DESCRIBE 検証時の取得上限（メタデータなので小さくてよい）
+  var VALIDATE_MAX_RECORDS = 100;
 
   var $split = document.getElementById("ksqld-split");
   var $panes = document.getElementById("ksqld-panes");
@@ -46,6 +48,25 @@
     }
   }
 
+  // 先頭コメント／空白を除いた最初のキーワードを取り出す
+  function leadingKeyword(sql) {
+    var s = String(sql);
+    var prev;
+    do {
+      prev = s;
+      s = s.replace(/^\s+/, "").replace(/^--[^\n]*\n?/, "").replace(/^\/\*[\s\S]*?\*\//, "");
+    } while (s !== prev);
+    var m = /^([A-Za-z]+)/.exec(s);
+    return m ? m[1].toUpperCase() : "";
+  }
+
+  // SHOW APPS / DESCRIBE は runQuery では実行できるが explainQuery の対象外（B66 仕様）。
+  // これらは explain せず、軽量な runQuery で検証する。
+  function isExplainable(sql) {
+    var kw = leadingKeyword(sql);
+    return kw !== "SHOW" && kw !== "DESCRIBE" && kw !== "DESC";
+  }
+
   // 保存前の SQL 検証（explainQuery で実行前チェック・データ取得はしない）
   function validateSql(card) {
     var $status = card.querySelector(".ksqld-validate-result");
@@ -63,11 +84,33 @@
     $button.disabled = true;
     setValidateResult($status, $plan, "検証中…", "note");
     var client = engine.createReadonlyKintoneClient();
-    engine.explainQuery(sql, { client: client })
-      .then(function (plan) {
-        var detail = plan && plan.text ? plan.text
-          : (plan && plan.lines ? plan.lines.join("\n") : "");
-        setValidateResult($status, $plan, "OK: 実行可能な SQL です。", "ok", detail);
+
+    // SELECT/WITH/UNION は explain（データ取得なし）、SHOW/DESCRIBE は軽量 runQuery で検証
+    var run = isExplainable(sql)
+      ? engine.explainQuery(sql, { client: client }).then(function (plan) {
+          return {
+            ok: "OK: 実行可能な SQL です。",
+            detail: plan && plan.text ? plan.text
+              : (plan && plan.lines ? plan.lines.join("\n") : ""),
+            warnings: plan && plan.warnings
+          };
+        })
+      : engine.runQuery(sql, { client: client, maxRecords: VALIDATE_MAX_RECORDS }).then(function (result) {
+          var cols = (result && result.columns || []).map(function (c) { return c.name; });
+          return {
+            ok: "OK: 実行可能な SQL です（" + (result ? result.rowCount : 0) + " 件）。",
+            detail: cols.length ? "列: " + cols.join(", ") : "",
+            warnings: result && result.warnings
+          };
+        });
+
+    run
+      .then(function (r) {
+        var detail = r.detail || "";
+        if (r.warnings && r.warnings.length) {
+          detail += (detail ? "\n\n" : "") + "警告:\n- " + r.warnings.join("\n- ");
+        }
+        setValidateResult($status, $plan, r.ok, "ok", detail);
       })
       .catch(function (err) {
         var code = (err && err.code) ? "[" + err.code + "] " : "";

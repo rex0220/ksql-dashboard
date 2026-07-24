@@ -30,13 +30,15 @@ var result = await engine.runQuery(sql, { client: client, maxRecords: 500 });
 // result.rows:    [{ 列名: "値(すべて文字列)" }]
 ```
 
-### 導入手順（B66 リリース後）
+### エンジンの同梱
 
-1. `@rex0220/kintone-sql-tools`（v3.19.0 以降）の **UMD ビルド `dist-engine/ksql-engine.umd.js`** を、この plugin の `js/ksql-engine.umd.js` として配置する。
-2. `manifest.json` の `desktop.js` は既に `js/ksql-engine.umd.js` → `js/desktop.js` の順で読み込む。
-3. パッケージ化してアップロード。
+`@rex0220/kintone-sql-tools` の **UMD ビルド v3.19.0** を `js/ksql-engine.umd.js` として同梱済み。
+`manifest.json` は `js/ksql-engine.umd.js` → `js/desktop.js`（config も同順）で読み込む。
 
-> **注意**: UMD は必ず `window.ksql.get("<version>")` で**バージョンを明示**して取得する（複数プラグインの別バージョン共存対策）。`js/ksql-engine.umd.js` が未配置の場合、ダッシュボードは「kSQL エンジン未読込」のプレースホルダを表示する（設定・レイアウトの確認は可能）。
+更新する場合は親リポジトリの `dist-engine/ksql-engine.umd.js` を再コピーし、**版を上げたときは
+`js/desktop.js` と `js/config.js` の `KSQL_VERSION` も更新**する。
+
+> **注意**: UMD は必ず `window.ksql.get("<version>")` で**バージョンを明示**して取得する（複数プラグインの別バージョン共存対策）。`get()` が `undefined` を返す場合、ダッシュボードは「kSQL エンジン未読込」と表示する。
 
 ## ディレクトリ
 
@@ -46,7 +48,8 @@ ksql-dashboard/
 ├── html/config.html       設定画面
 ├── js/config.js           設定画面ロジック
 ├── js/desktop.js          ダッシュボード描画
-├── js/ksql-engine.umd.js  (B66 リリース後に配置)
+├── js/ksql-engine.umd.js  kSQL エンジン UMD v3.19.0（同梱）
+├── scripts/package.js     zip 作成（cli-kintone plugin pack）
 ├── css/config.css
 ├── css/desktop.css
 └── image/icon.png         (48x48 プレースホルダ・要差し替え)
