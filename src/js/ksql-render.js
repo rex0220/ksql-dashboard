@@ -123,7 +123,8 @@
         "kSQL エンジン未読込です。js/ksql-engine.umd.js を配置してください。"));
       return;
     }
-    engine.runQuery(pane.sql, { client: client, maxRecords: DEFAULT_MAX_RECORDS })
+    var maxRecords = (typeof pane.maxRecords === "number" && pane.maxRecords > 0) ? pane.maxRecords : DEFAULT_MAX_RECORDS;
+    engine.runQuery(pane.sql, { client: client, maxRecords: maxRecords })
       .then(function (result) {
         tileBody.innerHTML = "";
         if (pane.display === "chart") { renderChart(tileBody, result, pane); }

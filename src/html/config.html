@@ -41,15 +41,21 @@
 
   <div id="ksqld-editor" class="ksqld-editor">
     <section class="ksqld-section">
-      <label class="ksqld-label" for="ksqld-split">画面分割数</label>
-      <select id="ksqld-split" class="ksqld-select">
-        <option value="1">1 分割（単一）</option>
-        <option value="2">2 分割（横2）</option>
-        <option value="3">3 分割（上2・下1）</option>
-        <option value="3b">3 分割（上1・下2）</option>
-        <option value="4">4 分割（2×2）</option>
-      </select>
-      <p class="ksqld-hint">分割数に応じて、下の「ペイン一覧」の数が変わります。</p>
+      <div class="ksqld-dash-opts">
+        <label class="ksqld-label-inline">画面分割数
+          <select id="ksqld-split" class="ksqld-select">
+            <option value="1">1 分割（単一）</option>
+            <option value="2">2 分割（横2）</option>
+            <option value="3">3 分割（上2・下1）</option>
+            <option value="3b">3 分割（上1・下2）</option>
+            <option value="4">4 分割（2×2）</option>
+          </select>
+        </label>
+        <label class="ksqld-label-inline">自動更新（分・0で無効）
+          <input type="number" min="0" step="10" id="ksqld-refresh" class="ksqld-input ksqld-refresh-input" placeholder="0" />
+        </label>
+      </div>
+      <p class="ksqld-hint">分割数に応じて、下の「ペイン一覧」の数が変わります。自動更新は一覧画面で一定間隔ごとに再取得します（最短10分・10分単位。0で無効）。</p>
     </section>
 
     <section class="ksqld-section">
@@ -131,7 +137,7 @@
       <input type="text" class="ksqld-input ksqld-pane-title" placeholder="ペインのタイトル" />
     </div>
     <label class="ksqld-label">SQL</label>
-    <textarea class="ksqld-textarea ksqld-pane-sql" rows="4"
+    <textarea class="ksqld-textarea ksqld-pane-sql" rows="8"
       placeholder="SELECT 担当, COUNT(*) AS 件数 FROM APP100 GROUP BY 担当"></textarea>
     <div class="ksqld-pane-validate">
       <button type="button" class="ksqld-btn ksqld-btn-sub ksqld-validate">検証</button>
@@ -139,18 +145,21 @@
     </div>
     <pre class="ksqld-validate-plan" hidden></pre>
     <div class="ksqld-pane-display">
-      <label class="ksqld-label">表示方法</label>
-      <select class="ksqld-select ksqld-pane-type">
-        <option value="table">表</option>
-        <option value="chart">グラフ（棒）</option>
-      </select>
-      <div class="ksqld-chart-cols" hidden>
-        <label class="ksqld-label-inline">グラフの向き
+      <div class="ksqld-pane-display-row">
+        <label class="ksqld-label-inline">表示方法
+          <select class="ksqld-select ksqld-pane-type">
+            <option value="table">表</option>
+            <option value="chart">グラフ（棒）</option>
+          </select>
+        </label>
+        <label class="ksqld-label-inline ksqld-chart-type-wrap" hidden>グラフの向き
           <select class="ksqld-select ksqld-pane-chart-type">
             <option value="bar">横棒</option>
             <option value="column">縦棒</option>
           </select>
         </label>
+      </div>
+      <div class="ksqld-chart-cols" hidden>
         <label class="ksqld-label-inline">ラベル列
           <input type="text" class="ksqld-input ksqld-pane-label-col" placeholder="担当" />
         </label>
@@ -158,6 +167,9 @@
           <input type="text" class="ksqld-input ksqld-pane-value-col" placeholder="件数" />
         </label>
       </div>
+      <label class="ksqld-label-inline ksqld-pane-maxrecords-row">取得件数（未指定=500）
+        <input type="number" min="10" step="10" class="ksqld-input ksqld-pane-maxrecords" placeholder="500" />
+      </label>
     </div>
   </div>
 </template>

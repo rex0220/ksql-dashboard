@@ -75,6 +75,13 @@
 .ksqld-preview-box { max-width: none; width: 100%; }
 #ksqld-preview { margin-top: 4px; }
 
+.ksqld-dash-opts { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-end; }
+.ksqld-refresh-input { width: 120px; }
+/* 表示方法とグラフの向きを横並び、取得件数は常に独立行（表/グラフで位置が変わらない） */
+.ksqld-pane-display-row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; }
+.ksqld-pane-maxrecords-row { display: flex; margin-top: 8px; }
+.ksqld-pane-maxrecords { width: 110px; }
+
 .ksqld-panes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .ksqld-pane-card {
   border: 1px solid #e3e3e3;

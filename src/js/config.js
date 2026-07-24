@@ -30,6 +30,7 @@
   var $commonNote = document.getElementById("ksqld-common-note");
   var $editor = document.getElementById("ksqld-editor");
   var $split = document.getElementById("ksqld-split");
+  var $refresh = document.getElementById("ksqld-refresh");
   var $panes = document.getElementById("ksqld-panes");
   var $save = document.getElementById("ksqld-save");
   var $cancel = document.getElementById("ksqld-cancel");
@@ -88,14 +89,37 @@
   function normalizeDash(key, d) {
     d = d || {};
     var panes = Array.isArray(d.panes) ? d.panes : [];
+    var refreshSec = normalizeRefresh(d.refreshSec);
     if (key === DEFAULT_KEY) {
-      return { enabled: d.enabled !== false, split: normalizeSplit(d.split), panes: panes };
+      return { enabled: d.enabled !== false, split: normalizeSplit(d.split), panes: panes, refreshSec: refreshSec };
     }
     // source 未指定の旧データは、ペインがあれば個別・無ければ共通とみなす
     var source = d.source === "individual" ? "individual"
       : d.source === "common" ? "common"
       : (panes.length ? "individual" : "common");
-    return { enabled: d.enabled !== false, source: source, split: normalizeSplit(d.split), panes: panes };
+    return { enabled: d.enabled !== false, source: source, split: normalizeSplit(d.split), panes: panes, refreshSec: refreshSec };
+  }
+
+  // 自動更新間隔（秒）を正規化。0/未指定/不正=無効。最短10分・10分単位に切り上げて秒で返す。
+  function normalizeRefresh(sec) {
+    var n = parseInt(sec, 10);
+    if (!isFinite(n) || n <= 0) { return 0; }
+    var min = Math.ceil(n / 60);
+    if (min < 10) { min = 10; }
+    min = Math.ceil(min / 10) * 10; // 10分単位
+    return min * 60;                // 秒で保持
+  }
+
+  // 自動更新の入力欄を有効値（分）へスナップ表示する
+  function snapRefreshInput() {
+    var sec = normalizeRefresh((parseInt($refresh.value, 10) || 0) * 60);
+    $refresh.value = sec ? Math.round(sec / 60) : 0;
+  }
+
+  // 取得件数を正規化。空/不正/非正=undefined（＝既定500を使う）。
+  function normalizeMaxRecords(v) {
+    var n = parseInt(v, 10);
+    return (String(v).trim() !== "" && isFinite(n) && n > 0) ? n : undefined;
   }
 
   function readSavedConfig() {
@@ -201,7 +225,7 @@
 
   // カードの入力値を1ペイン分の設定として読み出す
   function readCard(card) {
-    return {
+    var pane = {
       title: card.querySelector(".ksqld-pane-title").value.trim(),
       sql: card.querySelector(".ksqld-pane-sql").value.trim(),
       display: card.querySelector(".ksqld-pane-type").value === "chart" ? "chart" : "table",
@@ -209,6 +233,9 @@
       labelColumn: card.querySelector(".ksqld-pane-label-col").value.trim(),
       valueColumn: card.querySelector(".ksqld-pane-value-col").value.trim()
     };
+    var mr = normalizeMaxRecords(card.querySelector(".ksqld-pane-maxrecords").value);
+    if (mr != null) { pane.maxRecords = mr; } // 未指定は保存しない（既定500）
+    return pane;
   }
 
   // 1ペイン分の設定をカードへ反映（複写・入れ替えでも使用）
@@ -220,8 +247,15 @@
     card.querySelector(".ksqld-pane-chart-type").value = pane.chartType === "column" ? "column" : "bar";
     card.querySelector(".ksqld-pane-label-col").value = pane.labelColumn || "";
     card.querySelector(".ksqld-pane-value-col").value = pane.valueColumn || "";
-    card.querySelector(".ksqld-chart-cols").hidden =
-      card.querySelector(".ksqld-pane-type").value !== "chart";
+    card.querySelector(".ksqld-pane-maxrecords").value = (pane.maxRecords != null ? pane.maxRecords : "");
+    toggleChartUI(card);
+  }
+
+  // 表示方法に応じて「グラフの向き」と「ラベル列/値列」の表示を切り替える
+  function toggleChartUI(card) {
+    var isChart = card.querySelector(".ksqld-pane-type").value === "chart";
+    card.querySelector(".ksqld-chart-type-wrap").hidden = !isChart;
+    card.querySelector(".ksqld-chart-cols").hidden = !isChart;
   }
 
   function getCards() { return $panes.querySelectorAll(".ksqld-pane-card"); }
@@ -233,9 +267,7 @@
     card.querySelector(".ksqld-pane-index").textContent = String(index + 1);
     applyPaneToCard(card, pane);
 
-    var $type = card.querySelector(".ksqld-pane-type");
-    var $chartCols = card.querySelector(".ksqld-chart-cols");
-    $type.addEventListener("change", function () { $chartCols.hidden = $type.value !== "chart"; });
+    card.querySelector(".ksqld-pane-type").addEventListener("change", function () { toggleChartUI(card); });
 
     card.querySelector(".ksqld-validate").addEventListener("click", function () {
       validateSql(card);
@@ -294,6 +326,7 @@
     $enabled.checked = dash.enabled !== false;
     $source.value = dash.source === "individual" ? "individual" : "common";
     $split.value = normalizeSplit(dash.split);
+    $refresh.value = (dash.refreshSec ? Math.round(dash.refreshSec / 60) : 0); // 秒→分
     editorPanes = (dash.panes || []).slice(); // 全ペインを裏配列に保持
     buildCards(editorPanes, parseInt($split.value, 10) || 1);
     updateModeUI();
@@ -426,13 +459,14 @@
     stashEditor(); // 現在の内容を確定
     var src = dashboards[currentKey] || { split: "1", panes: [] };
     var panes = JSON.parse(JSON.stringify(src.panes || [])); // 文字列のみなので安全に複製
+    var refreshSec = normalizeRefresh(src.refreshSec);
     if (targetKey === DEFAULT_KEY) {
-      dashboards[targetKey] = { enabled: src.enabled !== false, split: normalizeSplit(src.split), panes: panes };
+      dashboards[targetKey] = { enabled: src.enabled !== false, split: normalizeSplit(src.split), panes: panes, refreshSec: refreshSec };
     } else {
       // 複写先はその一覧専用（個別）として表示させる
       dashboards[targetKey] = {
         enabled: src.enabled !== false, source: "individual",
-        split: normalizeSplit(src.split), panes: panes
+        split: normalizeSplit(src.split), panes: panes, refreshSec: refreshSec
       };
     }
     touched[targetKey] = true;
@@ -601,8 +635,8 @@
   function ensureDash(key) {
     if (!dashboards[key]) {
       dashboards[key] = key === DEFAULT_KEY
-        ? { enabled: true, split: "1", panes: [] }
-        : { enabled: false, source: "common", split: "1", panes: [] };
+        ? { enabled: true, split: "1", panes: [], refreshSec: 0 }
+        : { enabled: false, source: "common", split: "1", panes: [], refreshSec: 0 };
     }
     return dashboards[key];
   }
@@ -611,18 +645,21 @@
   function stashEditor() {
     syncVisibleToBacking();
     var panes = editorPanes.slice();
+    var refreshSec = normalizeRefresh((parseInt($refresh.value, 10) || 0) * 60); // 分→秒
     if (currentKey === DEFAULT_KEY) {
       dashboards[currentKey] = {
         enabled: $enabled.checked,
         split: normalizeSplit($split.value),
-        panes: panes
+        panes: panes,
+        refreshSec: refreshSec
       };
     } else {
       dashboards[currentKey] = {
         enabled: $enabled.checked,
         source: $source.value === "individual" ? "individual" : "common",
         split: normalizeSplit($split.value),
-        panes: panes
+        panes: panes,
+        refreshSec: refreshSec
       };
     }
   }
@@ -693,6 +730,9 @@
   populateViews([]);                               // まず既定のみ（取得後に差し替え）
   loadEditor(ensureDash(currentKey));
   $split.addEventListener("change", function () { markTouched(); onSplitChange(); });
+  $refresh.addEventListener("input", markTouched);
+  // 入力確定時に有効値（0 または最短10分・10分単位）へスナップ表示
+  $refresh.addEventListener("change", function () { markTouched(); snapRefreshInput(); });
   $enabled.addEventListener("change", function () { markTouched(); updateModeUI(); });
   $source.addEventListener("change", function () { markTouched(); updateModeUI(); });
   // ペインの入力・選択変更で touched（動的生成のカードはイベント委譲で拾う）

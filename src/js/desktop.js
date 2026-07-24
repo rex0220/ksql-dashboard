@@ -9,6 +9,7 @@
   var KSQL_VERSION = "3.19.0";
 
   var DEFAULT_KEY = "__default__"; // 既定ダッシュボードのキー
+  var refreshTimer = null;         // 自動更新タイマー（重複防止のため単一保持）
 
   function loadConfig() {
     var saved = kintone.plugin.app.getConfig(PLUGIN_ID);
@@ -29,22 +30,33 @@
       Object.keys(raw.dashboards).forEach(function (k) {
         var d = raw.dashboards[k] || {};
         var panes = Array.isArray(d.panes) ? d.panes : [];
+        var refreshSec = normalizeRefresh(d.refreshSec);
         if (k === DEFAULT_KEY) {
-          cfg.dashboards[k] = { enabled: d.enabled !== false, split: normalizeSplit(d.split), panes: panes };
+          cfg.dashboards[k] = { enabled: d.enabled !== false, split: normalizeSplit(d.split), panes: panes, refreshSec: refreshSec };
         } else {
           var source = d.source === "individual" ? "individual"
             : d.source === "common" ? "common"
             : (panes.length ? "individual" : "common"); // 旧データ互換
           cfg.dashboards[k] = {
             enabled: d.enabled !== false, source: source,
-            split: normalizeSplit(d.split), panes: panes
+            split: normalizeSplit(d.split), panes: panes, refreshSec: refreshSec
           };
         }
       });
     } else if (Array.isArray(raw.panes)) {
-      cfg.dashboards[DEFAULT_KEY] = { enabled: true, split: normalizeSplit(raw.split), panes: raw.panes };
+      cfg.dashboards[DEFAULT_KEY] = { enabled: true, split: normalizeSplit(raw.split), panes: raw.panes, refreshSec: 0 };
     }
     return cfg;
+  }
+
+  // 自動更新間隔（秒）を正規化。0/未指定/不正=無効。最短10分・10分単位に切り上げて秒で返す。
+  function normalizeRefresh(sec) {
+    var n = parseInt(sec, 10);
+    if (!isFinite(n) || n <= 0) { return 0; }
+    var min = Math.ceil(n / 60);
+    if (min < 10) { min = 10; }
+    min = Math.ceil(min / 10) * 10;
+    return min * 60;
   }
 
   // 共通ダッシュボードが表示可能か（有効かつペインあり）
@@ -105,6 +117,9 @@
   }
 
   function onIndexShow(event) {
+    // 前回の自動更新タイマーを必ず解除（SPA 遷移・ビュー切替での重複防止）
+    if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
+
     var config = normalizeConfig(loadConfig());
     var dash = pickDashboard(config, event);
 
@@ -127,6 +142,16 @@
     container.id = "ksqld-dashboard";
     ksqldRender.renderDashboard(container, dash, getEngine());
     space.appendChild(container);
+
+    // 自動更新（一定間隔で再取得）。ダッシュボードが DOM から外れたら停止。
+    if (dash.refreshSec > 0) {
+      refreshTimer = setInterval(function () {
+        if (!document.body.contains(container)) {
+          clearInterval(refreshTimer); refreshTimer = null; return;
+        }
+        ksqldRender.renderDashboard(container, dash, getEngine());
+      }, dash.refreshSec * 1000);
+    }
     return event;
   }
 
