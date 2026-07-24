@@ -24,7 +24,7 @@ kSQL Dashboard は、kintone のレコード一覧画面に **kSQL（read-only �
 - データ取得は **kSQL エンジン（read-only）** を同梱。外部 CDN 不要（CSP 安全）で、グラフも依存なしの自前描画です。
 - 値はすべて文字列で返るため、数値は**3桁区切り＋右詰め**で見やすく整形します。
 
-GitHub: https://github.com/rex0220/kintone-sql-tools
+GitHub: https://github.com/rex0220/ksql-dashboard （kSQL エンジン本体: https://github.com/rex0220/kintone-sql-tools ）
 ライセンス: MIT
 
 ---
@@ -35,7 +35,7 @@ GitHub: https://github.com/rex0220/kintone-sql-tools
 
 ビルド済みの zip をリポジトリの `dist/` に同梱しています（例: `dist/ksql-dashboard-v1.0.0.zip`）。この zip を使えば、ビルドなしで導入できます。
 
-1. `dist/ksql-dashboard-v<version>.zip` をダウンロード。
+1. [リポジトリの `dist/`](https://github.com/rex0220/ksql-dashboard/tree/main/dist) から `ksql-dashboard-v<version>.zip` をダウンロード。
 2. kintone の **システム設定 → その他 → プラグイン → 読み込む** から zip をアップロード。
 3. 対象アプリの設定 → **プラグイン** でこのプラグインを追加。
 4. **「アプリを更新」**して反映。
