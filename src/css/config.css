@@ -140,6 +140,13 @@
 }
 .ksqld-btn-primary { background: #3498db; border-color: #3498db; color: #fff; }
 .ksqld-btn:hover { opacity: 0.9; }
+/* 未保存インジケータ（注意色ボタンと同系色） */
+.ksqld-dirty-badge {
+  font-size: 12px; color: #8a6d3b; background: #fcf6e9;
+  border: 1px solid #e0b050; border-radius: 10px; padding: 2px 10px; white-space: nowrap;
+}
+.ksqld-btn-attention { box-shadow: 0 0 0 2px rgba(224, 176, 80, 0.6); }
+
 .ksqld-message { font-size: 13px; }
 .ksqld-message.ok { color: #27ae60; }
 .ksqld-message.error { color: #e74c3c; }

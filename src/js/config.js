@@ -36,6 +36,7 @@
   var $save = document.getElementById("ksqld-save");
   var $cancel = document.getElementById("ksqld-cancel");
   var $message = document.getElementById("ksqld-message");
+  var $dirtyBadge = document.getElementById("ksqld-dirty-badge");
   var $template = document.getElementById("ksqld-pane-template");
   var $deploy = document.getElementById("ksqld-deploy");
   // 複写・入れ替えツール（歯車ダイアログ）
@@ -390,6 +391,25 @@
     $message.className = "ksqld-message" + (kind ? " " + kind : "");
   }
 
+  // --- 未保存変更のガード ---------------------------------------------------
+  // 保存（setConfig 完了）後に編集があったかどうか。touched はビュー別の
+  // 「意図的に設定した」フラグで保存済みエントリも true になるため、別管理とする。
+  var dirty = false;
+
+  function markDirty() {
+    if (!dirty) { dirty = true; updateDirtyUI(); }
+  }
+
+  function clearDirty() {
+    dirty = false;
+    updateDirtyUI();
+  }
+
+  function updateDirtyUI() {
+    $dirtyBadge.hidden = !dirty;
+    $save.classList.toggle("ksqld-btn-attention", dirty);
+  }
+
   // --- 運用環境への反映（アプリのデプロイ）--------------------------------
   function delay(ms) {
     return new Promise(function (resolve) { setTimeout(resolve, ms); });
@@ -515,6 +535,7 @@
       };
     }
     touched[targetKey] = true;
+    markDirty();
     toolsMessage("「" + keyLabel(currentKey) + "」の設定を「" + keyLabel(targetKey) + "」へ複写しました。", "ok");
   }
 
@@ -584,6 +605,7 @@
     $view.value = currentKey;
     loadEditor(ensureDash(currentKey));
     refreshCopyTarget();
+    markDirty(); // 読み込んだ内容は未保存（「保存」で確定させる）
   }
 
   function onImportFile() {
@@ -724,7 +746,8 @@
     });
   }
 
-  function markTouched() { touched[currentKey] = true; }
+  // markTouched の呼び出し元はすべてユーザー編集起点なので dirty も同時に立てる
+  function markTouched() { touched[currentKey] = true; markDirty(); }
 
   // 対象ビューを切り替え（編集中の内容は退避してから読み込む）
   function switchView(newKey) {
@@ -779,6 +802,7 @@
   $refresh.addEventListener("input", markTouched);
   // 入力確定時に有効値（0 または最短10分・10分単位）へスナップ表示
   $refresh.addEventListener("change", function () { markTouched(); snapRefreshInput(); });
+  $deploy.addEventListener("change", markDirty); // deployOnSave も保存対象
   $enabled.addEventListener("change", function () { markTouched(); updateModeUI(); });
   $source.addEventListener("change", function () { markTouched(); updateModeUI(); });
   // ペインの入力・選択変更で touched（動的生成のカードはイベント委譲で拾う）
@@ -845,6 +869,8 @@
       { config: JSON.stringify({ dashboards: dashboards, deployOnSave: doDeploy, knownViews: knownViews }) },
       function () {
         // setConfig のコールバックが呼ばれた時点で preview へ保存済み
+        // （運用反映の成否とは無関係に、設定自体は保存済みなので dirty を解除）
+        clearDirty();
         if (!doDeploy) {
           showMessage("保存しました。（運用環境へ反映するにはアプリを更新してください）", "ok");
           $save.disabled = false;
@@ -879,6 +905,13 @@
   });
 
   $cancel.addEventListener("click", function () {
+    if (dirty && !window.confirm("編集中の変更が保存されていません。破棄して戻りますか？")) { return; }
+    dirty = false; // beforeunload の二重確認を避ける
     history.back();
+  });
+
+  // リロード・タブを閉じる・kintone 内の他画面への遷移をガード
+  window.addEventListener("beforeunload", function (e) {
+    if (dirty) { e.preventDefault(); e.returnValue = ""; }
   });
 })(kintone.$PLUGIN_ID);
