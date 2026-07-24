@@ -4,15 +4,17 @@
  * 成果物を dist/ 配下に出力する。
  *   - 秘密鍵 dist/ksql-dashboard.ppk が無ければ `cli-kintone plugin keygen` で生成
  *   - `cli-kintone plugin pack` で dist/ksql-dashboard.zip を作成
- *   - --upload 指定時は続けて `cli-kintone plugin upload` で kintone に反映
+ *   - --upload / --upload-only 指定時は `cli-kintone plugin upload` で kintone に反映
  * --private-key を常に同じ鍵で指定するため plugin ID は固定される。
  *
  * 使い方:
  *   node scripts/package.js               # zip を作成（ビルドのみ）
- *   node scripts/package.js --upload      # zip 作成後、そのまま kintone にアップロード
+ *   node scripts/package.js --upload      # ビルド＋アップロード
+ *   node scripts/package.js --upload-only # アップロードのみ（既存 zip を再ビルドしない）
  *   node scripts/package.js --new         # 鍵を作り直してから zip を作成（plugin ID が変わる）
  *   npm run package                       # ビルドのみ
- *   npm run upload                        # ビルド＋アップロード
+ *   npm run package:upload                # ビルド＋アップロード
+ *   npm run upload                        # アップロードのみ
  *
  * アップロードの認証（.env またはシェルの環境変数で指定・.env はコミットしない）:
  *   KINTONE_BASE_URL   例: https://example.cybozu.com
@@ -36,7 +38,9 @@ var PPK = path.join(DIST, "ksql-dashboard.ppk");
 var ENV_FILE = path.join(ROOT, ".env");
 
 var forceNew = process.argv.indexOf("--new") !== -1;
-var doUpload = process.argv.indexOf("--upload") !== -1;
+var uploadOnly = process.argv.indexOf("--upload-only") !== -1;   // アップロードのみ
+var doUpload = uploadOnly || process.argv.indexOf("--upload") !== -1;
+var doPack = !uploadOnly;                                         // upload-only 以外はビルドする
 
 function q(p) { return '"' + p + '"'; }
 
@@ -73,29 +77,36 @@ function cliKintone(subcmd) {
   if (res.status !== 0) { process.exit(res.status || 1); }
 }
 
-// dist/ を用意
-fs.mkdirSync(DIST, { recursive: true });
+// --- パッケージ化（upload-only 以外）------------------------------------
+if (doPack) {
+  fs.mkdirSync(DIST, { recursive: true });
 
-// --new のときは既存の鍵を削除して作り直す
-if (forceNew && fs.existsSync(PPK)) {
-  fs.unlinkSync(PPK);
-  console.log("[package] --new: 既存の鍵を削除しました（plugin ID が変わります）。");
+  // --new のときは既存の鍵を削除して作り直す
+  if (forceNew && fs.existsSync(PPK)) {
+    fs.unlinkSync(PPK);
+    console.log("[package] --new: 既存の鍵を削除しました（plugin ID が変わります）。");
+  }
+
+  // 秘密鍵が無ければ生成
+  if (!fs.existsSync(PPK)) {
+    console.log("[package] 秘密鍵を生成します: dist/ksql-dashboard.ppk");
+    cliKintone("plugin keygen --output " + q(PPK));
+  } else {
+    console.log("[package] 既存の鍵を使用します: dist/ksql-dashboard.ppk");
+  }
+
+  // zip を作成
+  cliKintone("plugin pack --input " + q(MANIFEST) + " --output " + q(OUT) + " --private-key " + q(PPK));
+  console.log("[package] 完了: dist/ksql-dashboard.zip（鍵: dist/ksql-dashboard.ppk は安全に保管してください）");
 }
 
-// 秘密鍵が無ければ生成
-if (!fs.existsSync(PPK)) {
-  console.log("[package] 秘密鍵を生成します: dist/ksql-dashboard.ppk");
-  cliKintone("plugin keygen --output " + q(PPK));
-} else {
-  console.log("[package] 既存の鍵を使用します: dist/ksql-dashboard.ppk");
-}
-
-// zip を作成
-cliKintone("plugin pack --input " + q(MANIFEST) + " --output " + q(OUT) + " --private-key " + q(PPK));
-console.log("[package] 完了: dist/ksql-dashboard.zip（鍵: dist/ksql-dashboard.ppk は安全に保管してください）");
-
-// --upload 指定時はそのまま kintone へアップロード
+// --- アップロード（--upload / --upload-only）-----------------------------
 if (doUpload) {
+  if (!fs.existsSync(OUT)) {
+    console.error("[package] アップロードに失敗: dist/ksql-dashboard.zip がありません。" +
+      "\n        先に `npm run package` でパッケージ化してください。");
+    process.exit(1);
+  }
   loadEnv();
   if (!process.env.KINTONE_BASE_URL) {
     console.error("[package] アップロードに失敗: KINTONE_BASE_URL が未設定です。" +

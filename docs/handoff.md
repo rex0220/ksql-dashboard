@@ -161,7 +161,7 @@ ExplainResult = { type: "explain", lines: string[], text: string, metrics }
   npx cli-kintone plugin keygen --output dist/ksql-dashboard.ppk   # 初回のみ
   npx cli-kintone plugin pack -i src/manifest.json -o dist/ksql-dashboard.zip --private-key dist/ksql-dashboard.ppk
   ```
-  **パッケージ化＋自動アップロード**: `npm run upload`（= package ＋ `cli-kintone plugin upload`）。
+  **アップロード**: `npm run package:upload`（ビルド＋アップロード）／`npm run upload`（アップロードのみ・既存 zip を反映）。
   認証は `.env`（`.env.example` 参照・コミット禁止）の `KINTONE_BASE_URL`/`KINTONE_USERNAME`/`KINTONE_PASSWORD`。
   アップロードはシステムのプラグイン更新まで。各アプリの反映は別途「アプリを更新」（設定画面の『運用環境に反映』でも可）。
   `--private-key` を常に同じ鍵で指定するため **plugin ID は固定**される（旧 `@kintone/plugin-packer` は鍵未指定だと毎回 ID が変わったが、`cli-kintone` は `--private-key` 必須）。`dist/`（`*.zip`/`*.ppk`）は `.gitignore` 済み（コミットしない）。**`.ppk` は再アップデートに必要なので安全に保管**。鍵を作り直す場合は `npm run package -- --new`。

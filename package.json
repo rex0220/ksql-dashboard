@@ -5,6 +5,7 @@
   "description": "kintone プラグイン: kSQL(read-only) の結果を 1〜4 分割ダッシュボードで表示する。",
   "scripts": {
     "package": "node scripts/package.js",
-    "upload": "node scripts/package.js --upload"
+    "package:upload": "node scripts/package.js --upload",
+    "upload": "node scripts/package.js --upload-only"
   }
 }

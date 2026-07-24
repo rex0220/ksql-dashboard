@@ -86,13 +86,16 @@ npx cli-kintone plugin pack \
 - 鍵を作り直す（plugin ID を変える）場合は `npm run package -- --new`。
 - **`.ppk` は再アップデートに必要**。安全に保管すること（`.gitignore` 済みでコミットされない）。
 
-## パッケージ化＋自動アップロード
+## アップロード
 
-`npm run upload` で、zip 作成に続けて `cli-kintone plugin upload` で kintone へ反映する。
+`cli-kintone plugin upload` で kintone へ反映する。用途に応じて3つ:
 
 ```sh
-cp .env.example .env   # 初回のみ。認証情報を記入（.env はコミットされない）
-npm run upload
+cp .env.example .env    # 初回のみ。認証情報を記入（.env はコミットされない）
+
+npm run package         # ① ビルドのみ（dist/ksql-dashboard.zip を作成）
+npm run package:upload  # ② ビルド＋アップロード
+npm run upload          # ③ アップロードのみ（既存 zip を再ビルドせず反映）
 ```
 
 `.env` に以下を設定する:
@@ -103,7 +106,7 @@ KINTONE_USERNAME=your-login-name
 KINTONE_PASSWORD=your-password
 ```
 
-- `npm run upload` = `npm run package` ＋ `cli-kintone plugin upload --input dist/ksql-dashboard.zip --yes`。
+- `package:upload` = `package` ＋ `plugin upload`。`upload` は**アップロードのみ**（`dist/ksql-dashboard.zip` が無ければ中断）。
 - 認証情報は環境変数（`.env` かシェル）で渡す。未設定なら実行前に中断する。
 - アップロードは**システムのプラグイン更新**まで。各アプリでの反映は、プラグイン有効化＋「アプリを更新」（設定画面の「運用環境に反映」でも可）。
 
