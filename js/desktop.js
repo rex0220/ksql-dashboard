@@ -5,10 +5,6 @@
 (function (PLUGIN_ID) {
   "use strict";
 
-  // スクリプト自体が読み込まれたことの確認用（ハンドラ発火前に必ず出る）。
-  // ここが出ない＝desktop.js が未ロード（再アップロード漏れ／モバイル／未適用など）。
-  console.log("kSQL Dashboard: desktop.js loaded; window.ksql=", !!window.ksql);
-
   // 本プラグインが想定する kSQL エンジンのバージョン（UMD レジストリのキー）
   var KSQL_VERSION = "3.19.0";
   var DEFAULT_MAX_RECORDS = 500;

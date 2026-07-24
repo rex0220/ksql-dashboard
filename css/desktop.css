@@ -31,6 +31,9 @@
 }
 .ksqld-table th { background: #f5f5f5; position: sticky; top: 0; }
 .ksqld-table td.ksqld-num { text-align: right; font-variant-numeric: tabular-nums; }
+/* 行を交互に色分けして見やすく（ゼブラ）＋ホバーで強調 */
+.ksqld-table tbody tr:nth-child(even) { background: #f7f9fb; }
+.ksqld-table tbody tr:hover { background: #eef3f8; }
 
 .ksqld-bar-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 12px; }
 .ksqld-bar-label { flex: 0 0 120px; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
