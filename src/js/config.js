@@ -51,6 +51,12 @@
   var $download = document.getElementById("ksqld-download");
   var $uploadBtn = document.getElementById("ksqld-upload");
   var $importFile = document.getElementById("ksqld-import-file");
+  // プレビュー
+  var $previewOpen = document.getElementById("ksqld-preview-open");
+  var $previewClose = document.getElementById("ksqld-preview-close");
+  var $previewReload = document.getElementById("ksqld-preview-reload");
+  var $previewModal = document.getElementById("ksqld-preview-modal");
+  var $preview = document.getElementById("ksqld-preview");
 
   var appName = "";       // ダウンロードのメタ情報用（取得失敗時は空）
   var lastViewList = [];  // 直近取得のビュー一覧（インポート後の再描画用）
@@ -518,6 +524,27 @@
     reader.readAsText(f);
   }
 
+  // --- プレビュー ----------------------------------------------------------
+  // 編集中のダッシュボード（分割＋表示中ペイン）を実データで描画する
+  function renderPreview() {
+    var dash = { split: normalizeSplit($split.value), panes: collectPanes() };
+    if (!dash.panes.length) {
+      $preview.innerHTML = "";
+      $preview.appendChild(el("div", "ksqld-note", "表示するペインがありません。"));
+      return;
+    }
+    ksqldRender.renderDashboard($preview, dash, getEngine());
+  }
+
+  // el が必要（ksqldRender 経由で使う）
+  function el(tag, className, text) { return ksqldRender.el(tag, className, text); }
+
+  function openPreview() {
+    $previewModal.hidden = false;
+    renderPreview();
+  }
+  function closePreview() { $previewModal.hidden = true; }
+
   // --- 複写・入れ替えツール（歯車ダイアログ）------------------------------
   function toolsMessage(text, kind) {
     $toolsMsg.textContent = text;
@@ -684,6 +711,11 @@
   $download.addEventListener("click", downloadConfig);
   $uploadBtn.addEventListener("click", function () { $importFile.click(); });
   $importFile.addEventListener("change", onImportFile);
+  // プレビュー
+  $previewOpen.addEventListener("click", openPreview);
+  $previewClose.addEventListener("click", closePreview);
+  $previewReload.addEventListener("click", renderPreview);
+  $previewModal.addEventListener("click", function (e) { if (e.target === $previewModal) { closePreview(); } });
   refreshCopyTarget();
 
   // ビュー一覧・アプリ名を取得（失敗しても既定で続行）

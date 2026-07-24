@@ -70,6 +70,11 @@
 .ksqld-modal-row { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
 .ksqld-modal-row > span { font-size: 13px; align-self: center; }
 
+/* プレビュー（実データのダッシュボードを表示）は画面いっぱいの横幅に */
+#ksqld-preview-modal { padding: 24px 12px; }
+.ksqld-preview-box { max-width: none; width: 100%; }
+#ksqld-preview { margin-top: 4px; }
+
 .ksqld-panes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .ksqld-pane-card {
   border: 1px solid #e3e3e3;
@@ -86,9 +91,11 @@
 .ksqld-pane-title { flex: 1 1 auto; }
 .ksqld-chart-cols { margin-top: 8px; }
 
-.ksqld-pane-validate { display: flex; align-items: center; gap: 8px; margin: 8px 0 4px; }
+/* 上寄せ＋ボタンは自然サイズ固定（エラーが複数行でも検証ボタンが伸びない） */
+.ksqld-pane-validate { display: flex; align-items: flex-start; gap: 8px; margin: 8px 0 4px; }
+.ksqld-pane-validate .ksqld-btn { flex: 0 0 auto; align-self: flex-start; }
 .ksqld-btn-sub { padding: 4px 12px; font-size: 12px; }
-.ksqld-validate-result { font-size: 12px; }
+.ksqld-validate-result { font-size: 12px; padding-top: 6px; }
 .ksqld-validate-result.ok { color: #27ae60; }
 .ksqld-validate-result.error { color: #e74c3c; }
 .ksqld-validate-result.note { color: #888; }
