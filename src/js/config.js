@@ -60,6 +60,10 @@
   var $previewReload = document.getElementById("ksqld-preview-reload");
   var $previewModal = document.getElementById("ksqld-preview-modal");
   var $preview = document.getElementById("ksqld-preview");
+  // キャンセル時の破棄確認ダイアログ
+  var $confirmModal = document.getElementById("ksqld-confirm-modal");
+  var $confirmStay = document.getElementById("ksqld-confirm-stay");
+  var $confirmDiscard = document.getElementById("ksqld-confirm-discard");
 
   var appName = "";       // ダウンロードのメタ情報用（取得失敗時は空）
   var lastViewList = [];  // 直近取得のビュー一覧（インポート後の再描画用）
@@ -905,12 +909,27 @@
   });
 
   $cancel.addEventListener("click", function () {
-    if (dirty && !window.confirm("編集中の変更が保存されていません。破棄して戻りますか？")) { return; }
+    if (dirty) {
+      $confirmModal.hidden = false;
+      $confirmStay.focus(); // 既定は安全側（編集に戻る）
+      return;
+    }
+    history.back();
+  });
+  $confirmStay.addEventListener("click", function () { $confirmModal.hidden = true; });
+  $confirmDiscard.addEventListener("click", function () {
     dirty = false; // beforeunload の二重確認を避ける
     history.back();
   });
+  $confirmModal.addEventListener("click", function (e) {
+    if (e.target === $confirmModal) { $confirmModal.hidden = true; } // 背景クリック＝編集に戻る
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !$confirmModal.hidden) { $confirmModal.hidden = true; }
+  });
 
   // リロード・タブを閉じる・kintone 内の他画面への遷移をガード
+  // （ブラウザ標準の確認のみ。文言はカスタマイズ不可）
   window.addEventListener("beforeunload", function (e) {
     if (dirty) { e.preventDefault(); e.returnValue = ""; }
   });

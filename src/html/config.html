@@ -143,6 +143,18 @@
     </div>
   </div>
 
+  <!-- キャンセル時の破棄確認（未保存の変更があるときのみ表示） -->
+  <div id="ksqld-confirm-modal" class="ksqld-modal" hidden>
+    <div class="ksqld-modal-box ksqld-confirm-box" role="dialog" aria-modal="true" aria-label="未保存の変更の確認">
+      <h3 class="ksqld-modal-title">未保存の変更があります</h3>
+      <p class="ksqld-confirm-text">編集中の変更が保存されていません。破棄して前の画面に戻りますか？</p>
+      <div class="ksqld-confirm-actions">
+        <button id="ksqld-confirm-stay" class="kintoneplugin-button-normal" type="button">編集に戻る</button>
+        <button id="ksqld-confirm-discard" class="ksqld-btn ksqld-btn-caution" type="button">破棄して戻る</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ダッシュボードのプレビュー -->
   <div id="ksqld-preview-modal" class="ksqld-modal" hidden>
     <div class="ksqld-modal-box ksqld-preview-box" role="dialog" aria-modal="true" aria-label="ダッシュボードのプレビュー">
