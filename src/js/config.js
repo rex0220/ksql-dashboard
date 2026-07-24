@@ -36,6 +36,7 @@
   var $save = document.getElementById("ksqld-save");
   var $cancel = document.getElementById("ksqld-cancel");
   var $message = document.getElementById("ksqld-message");
+  var $dirtyBadge = document.getElementById("ksqld-dirty-badge");
   var $template = document.getElementById("ksqld-pane-template");
   var $deploy = document.getElementById("ksqld-deploy");
   // 複写・入れ替えツール（歯車ダイアログ）
@@ -50,6 +51,7 @@
   var $toolsMsg = document.getElementById("ksqld-tools-msg");
   var $copyTarget = document.getElementById("ksqld-copy-target");
   var $copyViewBtn = document.getElementById("ksqld-copy-view");
+  var $swapViewBtn = document.getElementById("ksqld-swap-view");
   var $download = document.getElementById("ksqld-download");
   var $uploadBtn = document.getElementById("ksqld-upload");
   var $importFile = document.getElementById("ksqld-import-file");
@@ -59,6 +61,10 @@
   var $previewReload = document.getElementById("ksqld-preview-reload");
   var $previewModal = document.getElementById("ksqld-preview-modal");
   var $preview = document.getElementById("ksqld-preview");
+  // キャンセル時の破棄確認ダイアログ
+  var $confirmModal = document.getElementById("ksqld-confirm-modal");
+  var $confirmStay = document.getElementById("ksqld-confirm-stay");
+  var $confirmDiscard = document.getElementById("ksqld-confirm-discard");
 
   var appName = "";       // ダウンロードのメタ情報用（取得失敗時は空）
   var lastViewList = [];  // 直近取得のビュー一覧（インポート後の再描画用）
@@ -261,11 +267,10 @@
 
   function getCards() { return $panes.querySelectorAll(".ksqld-pane-card"); }
 
-  // 1枚のペイン設定フォームを生成
-  function buildPaneCard(index, pane) {
+  // 1枚のペイン設定フォームを生成（ペイン番号はタブ側にのみ表示する）
+  function buildPaneCard(pane) {
     var node = $template.content.cloneNode(true);
     var card = node.querySelector(".ksqld-pane-card");
-    card.querySelector(".ksqld-pane-index").textContent = String(index + 1);
     applyPaneToCard(card, pane);
 
     card.querySelector(".ksqld-pane-type").addEventListener("change", function () { toggleChartUI(card); });
@@ -285,7 +290,7 @@
   function buildCards(panes, count) {
     $panes.innerHTML = "";
     for (var i = 0; i < count && i < MAX_PANES; i++) {
-      $panes.appendChild(buildPaneCard(i, panes[i] || {}));
+      $panes.appendChild(buildPaneCard(panes[i] || {}));
     }
     buildTabs(count);
     setActivePane(activePane); // 範囲外なら内部で補正
@@ -391,6 +396,25 @@
     $message.className = "ksqld-message" + (kind ? " " + kind : "");
   }
 
+  // --- 未保存変更のガード ---------------------------------------------------
+  // 保存（setConfig 完了）後に編集があったかどうか。touched はビュー別の
+  // 「意図的に設定した」フラグで保存済みエントリも true になるため、別管理とする。
+  var dirty = false;
+
+  function markDirty() {
+    if (!dirty) { dirty = true; updateDirtyUI(); }
+  }
+
+  function clearDirty() {
+    dirty = false;
+    updateDirtyUI();
+  }
+
+  function updateDirtyUI() {
+    $dirtyBadge.hidden = !dirty;
+    $save.classList.toggle("ksqld-btn-attention", dirty);
+  }
+
   // --- 運用環境への反映（アプリのデプロイ）--------------------------------
   function delay(ms) {
     return new Promise(function (resolve) { setTimeout(resolve, ms); });
@@ -494,6 +518,7 @@
     var none = $copyTarget.options.length === 0;
     $copyTarget.disabled = none;
     $copyViewBtn.disabled = none;
+    $swapViewBtn.disabled = none;
   }
 
   // 今編集中の一覧の設定を、対象の一覧へ複写する
@@ -516,7 +541,47 @@
       };
     }
     touched[targetKey] = true;
+    markDirty();
     toolsMessage("「" + keyLabel(currentKey) + "」の設定を「" + keyLabel(targetKey) + "」へ複写しました。", "ok");
+  }
+
+  // 入れ替え用: 格納先キーの形式に合わせてダッシュボードを整形する。
+  // 共通(__default__)は source を持たず、一覧別は source を持つ。
+  // 共通から来たデータ（source 無し）は、ペインがあれば個別・無ければ共通とみなす。
+  function coerceDashFor(key, d) {
+    d = d || {};
+    var panes = Array.isArray(d.panes) ? d.panes : [];
+    var out = {
+      enabled: d.enabled !== false,
+      split: normalizeSplit(d.split),
+      panes: panes,
+      refreshSec: normalizeRefresh(d.refreshSec)
+    };
+    if (key !== DEFAULT_KEY) {
+      out.source = d.source === "common" ? "common"
+        : d.source === "individual" ? "individual"
+        : (panes.length ? "individual" : "common");
+    }
+    return out;
+  }
+
+  // 今編集中の一覧の設定と、対象の一覧の設定を相互に入れ替える
+  function swapViewWith(targetKey) {
+    if (!targetKey || targetKey === currentKey) {
+      toolsMessage("対象の一覧を選んでください（今の一覧とは別の一覧）。", "error");
+      return;
+    }
+    stashEditor(); // 現在の内容を確定
+    var a = ensureDash(currentKey);
+    var b = ensureDash(targetKey);
+    dashboards[currentKey] = coerceDashFor(currentKey, b);
+    dashboards[targetKey] = coerceDashFor(targetKey, a);
+    touched[currentKey] = true;
+    touched[targetKey] = true;
+    markDirty();
+    loadEditor(dashboards[currentKey]); // 入れ替え後の内容を画面へ反映
+    refreshOpPanes();                   // ペイン数の変化をダイアログの選択肢にも反映
+    toolsMessage("「" + keyLabel(currentKey) + "」と「" + keyLabel(targetKey) + "」の設定を入れ替えました。", "ok");
   }
 
   // --- 設定のダウンロード／アップロード -----------------------------------
@@ -585,6 +650,7 @@
     $view.value = currentKey;
     loadEditor(ensureDash(currentKey));
     refreshCopyTarget();
+    markDirty(); // 読み込んだ内容は未保存（「保存」で確定させる）
   }
 
   function onImportFile() {
@@ -725,7 +791,8 @@
     });
   }
 
-  function markTouched() { touched[currentKey] = true; }
+  // markTouched の呼び出し元はすべてユーザー編集起点なので dirty も同時に立てる
+  function markTouched() { touched[currentKey] = true; markDirty(); }
 
   // 対象ビューを切り替え（編集中の内容は退避してから読み込む）
   function switchView(newKey) {
@@ -780,6 +847,7 @@
   $refresh.addEventListener("input", markTouched);
   // 入力確定時に有効値（0 または最短10分・10分単位）へスナップ表示
   $refresh.addEventListener("change", function () { markTouched(); snapRefreshInput(); });
+  $deploy.addEventListener("change", markDirty); // deployOnSave も保存対象
   $enabled.addEventListener("change", function () { markTouched(); updateModeUI(); });
   $source.addEventListener("change", function () { markTouched(); updateModeUI(); });
   // ペインの入力・選択変更で touched（動的生成のカードはイベント委譲で拾う）
@@ -800,6 +868,7 @@
   $opCopy.addEventListener("click", function () { paneOp("copy"); });
   $opSwap.addEventListener("click", function () { paneOp("swap"); });
   $copyViewBtn.addEventListener("click", function () { copyViewTo($copyTarget.value); });
+  $swapViewBtn.addEventListener("click", function () { swapViewWith($copyTarget.value); });
   // 設定のダウンロード／アップロード
   $download.addEventListener("click", downloadConfig);
   $uploadBtn.addEventListener("click", function () { $importFile.click(); });
@@ -846,6 +915,8 @@
       { config: JSON.stringify({ dashboards: dashboards, deployOnSave: doDeploy, knownViews: knownViews }) },
       function () {
         // setConfig のコールバックが呼ばれた時点で preview へ保存済み
+        // （運用反映の成否とは無関係に、設定自体は保存済みなので dirty を解除）
+        clearDirty();
         if (!doDeploy) {
           showMessage("保存しました。（運用環境へ反映するにはアプリを更新してください）", "ok");
           $save.disabled = false;
@@ -880,6 +951,28 @@
   });
 
   $cancel.addEventListener("click", function () {
+    if (dirty) {
+      $confirmModal.hidden = false;
+      $confirmStay.focus(); // 既定は安全側（編集に戻る）
+      return;
+    }
     history.back();
+  });
+  $confirmStay.addEventListener("click", function () { $confirmModal.hidden = true; });
+  $confirmDiscard.addEventListener("click", function () {
+    dirty = false; // beforeunload の二重確認を避ける
+    history.back();
+  });
+  $confirmModal.addEventListener("click", function (e) {
+    if (e.target === $confirmModal) { $confirmModal.hidden = true; } // 背景クリック＝編集に戻る
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !$confirmModal.hidden) { $confirmModal.hidden = true; }
+  });
+
+  // リロード・タブを閉じる・kintone 内の他画面への遷移をガード
+  // （ブラウザ標準の確認のみ。文言はカスタマイズ不可）
+  window.addEventListener("beforeunload", function (e) {
+    if (dirty) { e.preventDefault(); e.returnValue = ""; }
   });
 })(kintone.$PLUGIN_ID);
