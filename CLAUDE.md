@@ -18,7 +18,9 @@ kintone プラグイン（サンプル）。レコード一覧画面に、kSQL(r
 kintone 標準 CLI（`cli-kintone`）を使う。成果物は `dist/` 配下（`.gitignore` 済み）。
 ```sh
 npm run package        # scripts/package.js: keygen(初回) → plugin pack
+npm run upload         # 上記 ＋ cli-kintone plugin upload で kintone に反映（.env の認証情報を使用）
 # 生 CLI: npx cli-kintone plugin pack -i manifest.json -o dist/ksql-dashboard.zip --private-key dist/ksql-dashboard.ppk
 # 鍵を作り直す（plugin ID を変える）: npm run package -- --new
 ```
+アップロードの認証は `.env`（`.env.example` 参照・コミット禁止）: `KINTONE_BASE_URL`/`KINTONE_USERNAME`/`KINTONE_PASSWORD`。
 `--private-key` を常に同じ鍵で指定するため plugin ID は固定される。`dist/ksql-dashboard.ppk` は再アップデートに必要なので保管する。

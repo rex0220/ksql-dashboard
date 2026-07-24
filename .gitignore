@@ -6,6 +6,10 @@ dist/
 # 依存
 node_modules/
 
+# 認証情報（アップロード用・コミット禁止。雛形は .env.example）
+.env
+.env.local
+
 # B66 実物 UMD（差し替え時に配置・サンプルのプレースホルダのみコミット）
 # js/ksql-engine.umd.js は差し替え後もプレースホルダを履歴に残すためコミット対象
 
