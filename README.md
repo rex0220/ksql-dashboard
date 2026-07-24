@@ -57,7 +57,8 @@ ksql-dashboard/
 │   └── image/icon.png      (48x48 プレースホルダ・要差し替え)
 ├── scripts/package.js      zip 作成／アップロード（cli-kintone）
 ├── package.json            npm run package / upload
-└── dist/                   生成物（.zip / .ppk・gitignore）
+├── keys/                   署名の秘密鍵 .ppk（gitignore・要保管）
+└── dist/                   生成物 zip（コミット対象）
 ```
 
 ## パッケージ化
@@ -70,21 +71,21 @@ npm run package
 
 `scripts/package.js` が以下を実行する:
 
-1. 秘密鍵 `dist/ksql-dashboard.ppk` が無ければ `cli-kintone plugin keygen` で生成
-2. `cli-kintone plugin pack` で `dist/ksql-dashboard.zip` を作成（`--private-key` を常に同じ鍵で指定するため **plugin ID は固定**）
+1. 秘密鍵 `keys/ksql-dashboard.ppk` が無ければ `cli-kintone plugin keygen` で生成
+2. `cli-kintone plugin pack` で `dist/ksql-dashboard-v<version>.zip` を作成（version は `src/manifest.json` から。`--private-key` を常に同じ鍵で指定するため **plugin ID は固定**）
 
-同等の生 CLI コマンド:
+同等の生 CLI コマンド（`<version>` は manifest の値。例: `1.0.0`）:
 
 ```sh
-npx cli-kintone plugin keygen --output dist/ksql-dashboard.ppk
+npx cli-kintone plugin keygen --output keys/ksql-dashboard.ppk
 npx cli-kintone plugin pack \
   --input src/manifest.json \
-  --output dist/ksql-dashboard.zip \
-  --private-key dist/ksql-dashboard.ppk
+  --output dist/ksql-dashboard-v1.0.0.zip \
+  --private-key keys/ksql-dashboard.ppk
 ```
 
 - 鍵を作り直す（plugin ID を変える）場合は `npm run package -- --new`。
-- **`.ppk` は再アップデートに必要**。安全に保管すること（`.gitignore` 済みでコミットされない）。
+- **`keys/*.ppk` は再アップデートに必要**。安全に保管すること（`.gitignore` 済みでコミットされない）。ビルド zip（`dist/`）はコミット対象。
 
 ## アップロード
 
@@ -93,7 +94,7 @@ npx cli-kintone plugin pack \
 ```sh
 cp .env.example .env    # 初回のみ。認証情報を記入（.env はコミットされない）
 
-npm run package         # ① ビルドのみ（dist/ksql-dashboard.zip を作成）
+npm run package         # ① ビルドのみ（dist/ksql-dashboard-v<version>.zip を作成）
 npm run package:upload  # ② ビルド＋アップロード
 npm run upload          # ③ アップロードのみ（既存 zip を再ビルドせず反映）
 ```
@@ -106,7 +107,7 @@ KINTONE_USERNAME=your-login-name
 KINTONE_PASSWORD=your-password
 ```
 
-- `package:upload` = `package` ＋ `plugin upload`。`upload` は**アップロードのみ**（`dist/ksql-dashboard.zip` が無ければ中断）。
+- `package:upload` = `package` ＋ `plugin upload`。`upload` は**アップロードのみ**（`dist/ksql-dashboard-v<version>.zip` が無ければ中断）。
 - 認証情報は環境変数（`.env` かシェル）で渡す。未設定なら実行前に中断する。
 - アップロードは**システムのプラグイン更新**まで。各アプリでの反映は、プラグイン有効化＋「アプリを更新」（設定画面の「運用環境に反映」でも可）。
 

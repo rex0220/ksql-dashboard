@@ -1,7 +1,7 @@
-# kintone plugin packer 生成物（成果物は dist/ 配下に出力する）
-dist/
-*.zip
+# プラグイン署名の秘密鍵（keys/ 配下・コミット禁止）
+keys/
 *.ppk
+# ※ ビルド zip は dist/ 配下に出力し、コミット対象とする（dist/・*.zip は無視しない）
 
 # 依存
 node_modules/

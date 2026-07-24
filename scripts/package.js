@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /* kSQL Dashboard — プラグイン zip 作成／アップロードスクリプト（kintone 標準 cli-kintone を使用）
  *
- * 成果物を dist/ 配下に出力する。
- *   - 秘密鍵 dist/ksql-dashboard.ppk が無ければ `cli-kintone plugin keygen` で生成
- *   - `cli-kintone plugin pack` で dist/ksql-dashboard.zip を作成
+ * 成果物 zip は dist/ 配下、秘密鍵は keys/ 配下（コミット禁止）。
+ *   - 秘密鍵 keys/ksql-dashboard.ppk が無ければ `cli-kintone plugin keygen` で生成
+ *   - `cli-kintone plugin pack` で dist/ksql-dashboard-v<version>.zip を作成（version は manifest から）
  *   - --upload / --upload-only 指定時は `cli-kintone plugin upload` で kintone に反映
  * --private-key を常に同じ鍵で指定するため plugin ID は固定される。
  *
@@ -32,10 +32,18 @@ var spawnSync = require("child_process").spawnSync;
 
 var ROOT = path.resolve(__dirname, "..");
 var DIST = path.join(ROOT, "dist");
+var KEYS = path.join(ROOT, "keys");                      // 秘密鍵の保管先（コミット禁止）
 var MANIFEST = path.join(ROOT, "src", "manifest.json"); // プラグイン本体は src/ 配下
-var OUT = path.join(DIST, "ksql-dashboard.zip");
-var PPK = path.join(DIST, "ksql-dashboard.ppk");
+var PPK = path.join(KEYS, "ksql-dashboard.ppk");
 var ENV_FILE = path.join(ROOT, ".env");
+
+// zip 名に manifest の version を付与（例: ksql-dashboard-v1.0.0.zip）
+function readVersion() {
+  try { return JSON.parse(fs.readFileSync(MANIFEST, "utf8")).version; } catch (e) { return null; }
+}
+var VERSION = readVersion();
+var OUT = path.join(DIST, "ksql-dashboard" + (VERSION != null ? "-v" + VERSION : "") + ".zip");
+var OUT_NAME = path.basename(OUT);
 
 var forceNew = process.argv.indexOf("--new") !== -1;
 var uploadOnly = process.argv.indexOf("--upload-only") !== -1;   // アップロードのみ
@@ -80,6 +88,7 @@ function cliKintone(subcmd) {
 // --- パッケージ化（upload-only 以外）------------------------------------
 if (doPack) {
   fs.mkdirSync(DIST, { recursive: true });
+  fs.mkdirSync(KEYS, { recursive: true });
 
   // --new のときは既存の鍵を削除して作り直す
   if (forceNew && fs.existsSync(PPK)) {
@@ -89,21 +98,21 @@ if (doPack) {
 
   // 秘密鍵が無ければ生成
   if (!fs.existsSync(PPK)) {
-    console.log("[package] 秘密鍵を生成します: dist/ksql-dashboard.ppk");
+    console.log("[package] 秘密鍵を生成します: keys/ksql-dashboard.ppk");
     cliKintone("plugin keygen --output " + q(PPK));
   } else {
-    console.log("[package] 既存の鍵を使用します: dist/ksql-dashboard.ppk");
+    console.log("[package] 既存の鍵を使用します: keys/ksql-dashboard.ppk");
   }
 
   // zip を作成
   cliKintone("plugin pack --input " + q(MANIFEST) + " --output " + q(OUT) + " --private-key " + q(PPK));
-  console.log("[package] 完了: dist/ksql-dashboard.zip（鍵: dist/ksql-dashboard.ppk は安全に保管してください）");
+  console.log("[package] 完了: dist/" + OUT_NAME + "（鍵: keys/ksql-dashboard.ppk は安全に保管してください）");
 }
 
 // --- アップロード（--upload / --upload-only）-----------------------------
 if (doUpload) {
   if (!fs.existsSync(OUT)) {
-    console.error("[package] アップロードに失敗: dist/ksql-dashboard.zip がありません。" +
+    console.error("[package] アップロードに失敗: dist/" + OUT_NAME + " がありません。" +
       "\n        先に `npm run package` でパッケージ化してください。");
     process.exit(1);
   }
