@@ -133,44 +133,51 @@
 <!-- ペイン設定のテンプレート -->
 <template id="ksqld-pane-template">
   <div class="ksqld-pane-card">
-    <div class="ksqld-pane-head">
-      <span class="ksqld-pane-index"></span>
-      <input type="text" class="ksqld-input ksqld-pane-title" placeholder="ペインのタイトル" />
-    </div>
-    <label class="ksqld-label">SQL</label>
-    <textarea class="ksqld-textarea ksqld-pane-sql" rows="8"
-      placeholder="SELECT 担当, COUNT(*) AS 件数 FROM APP100 GROUP BY 担当"></textarea>
-    <div class="ksqld-pane-validate">
-      <button type="button" class="ksqld-btn ksqld-btn-sub ksqld-validate">検証</button>
-      <span class="ksqld-validate-result" role="status"></span>
-    </div>
-    <pre class="ksqld-validate-plan" hidden></pre>
-    <div class="ksqld-pane-display">
-      <div class="ksqld-pane-display-row">
-        <label class="ksqld-label-inline">表示方法
-          <select class="ksqld-select ksqld-pane-type">
-            <option value="table">表</option>
-            <option value="chart">グラフ（棒）</option>
-          </select>
-        </label>
-        <label class="ksqld-label-inline ksqld-chart-type-wrap" hidden>グラフの向き
-          <select class="ksqld-select ksqld-pane-chart-type">
-            <option value="bar">横棒</option>
-            <option value="column">縦棒</option>
-          </select>
-        </label>
+    <div class="ksqld-pane-body">
+      <div class="ksqld-pane-sql-col">
+        <div class="ksqld-pane-head">
+          <span class="ksqld-pane-index"></span>
+          <input type="text" class="ksqld-input ksqld-pane-title" placeholder="ペインのタイトル" />
+        </div>
+        <label class="ksqld-label">SQL</label>
+        <textarea class="ksqld-textarea ksqld-pane-sql" rows="8"
+          placeholder="SELECT 担当, COUNT(*) AS 件数 FROM APP100 GROUP BY 担当"></textarea>
+        <div class="ksqld-pane-validate">
+          <button type="button" class="ksqld-btn ksqld-btn-sub ksqld-validate">検証</button>
+          <span class="ksqld-validate-result" role="status"></span>
+        </div>
+        <pre class="ksqld-validate-plan" hidden></pre>
       </div>
-      <div class="ksqld-chart-cols" hidden>
-        <label class="ksqld-label-inline">ラベル列
-          <input type="text" class="ksqld-input ksqld-pane-label-col" placeholder="担当" />
-        </label>
-        <label class="ksqld-label-inline">値列
-          <input type="text" class="ksqld-input ksqld-pane-value-col" placeholder="件数" />
-        </label>
+      <div class="ksqld-pane-settings-col">
+        <label class="ksqld-label">表示設定</label>
+        <div class="ksqld-pane-display">
+          <div class="ksqld-pane-display-row">
+            <label class="ksqld-label-inline">表示方法
+              <select class="ksqld-select ksqld-pane-type">
+                <option value="table">表</option>
+                <option value="chart">グラフ（棒）</option>
+              </select>
+            </label>
+            <label class="ksqld-label-inline ksqld-chart-type-wrap" hidden>グラフの向き
+              <select class="ksqld-select ksqld-pane-chart-type">
+                <option value="bar">横棒</option>
+                <option value="column">縦棒</option>
+              </select>
+            </label>
+          </div>
+          <div class="ksqld-chart-cols" hidden>
+            <label class="ksqld-label-inline">ラベル列
+              <input type="text" class="ksqld-input ksqld-pane-label-col" placeholder="担当" />
+            </label>
+            <label class="ksqld-label-inline">値列
+              <input type="text" class="ksqld-input ksqld-pane-value-col" placeholder="件数" />
+            </label>
+          </div>
+          <label class="ksqld-label-inline ksqld-pane-maxrecords-row">取得件数（未指定=500）
+            <input type="number" min="10" step="10" class="ksqld-input ksqld-pane-maxrecords" placeholder="500" />
+          </label>
+        </div>
       </div>
-      <label class="ksqld-label-inline ksqld-pane-maxrecords-row">取得件数（未指定=500）
-        <input type="number" min="10" step="10" class="ksqld-input ksqld-pane-maxrecords" placeholder="500" />
-      </label>
     </div>
   </div>
 </template>

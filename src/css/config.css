@@ -43,7 +43,10 @@
   box-sizing: border-box;
 }
 .ksqld-input { width: 100%; }
-.ksqld-textarea { width: 100%; font-family: Consolas, "Courier New", monospace; }
+/* max-width で列幅を超えて広がらないように（区切り線を越えてハンドルが掴めなくなるのを防ぐ） */
+.ksqld-textarea { width: 100%; max-width: 100%; font-family: Consolas, "Courier New", monospace; }
+/* SQL 欄はドラッグで小さくしすぎないよう最小高さを確保 */
+.ksqld-pane-sql { min-height: 120px; }
 
 /* 歯車（ツール）ボタン */
 .ksqld-icon-btn { padding: 6px 12px; font-size: 13px; }
@@ -99,6 +102,13 @@
   background: #fafafa;
 }
 .ksqld-pane-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+/* ペイン内を2カラム（左=SQL / 右=表示設定）。区切り線あり。狭い時は縦積み。 */
+.ksqld-pane-body { display: flex; gap: 0; align-items: stretch; flex-wrap: wrap; }
+.ksqld-pane-sql-col { flex: 1 1 420px; min-width: 300px; padding-right: 24px; }
+.ksqld-pane-settings-col {
+  flex: 1 1 260px; min-width: 240px;
+  padding-left: 24px; border-left: 1px solid #d9d9d9;
+}
 .ksqld-pane-index {
   flex: 0 0 auto;
   width: 24px; height: 24px; line-height: 24px; text-align: center;
