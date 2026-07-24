@@ -26,7 +26,7 @@
 .ksqld-toolbar-controls { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
 .ksqld-field { display: flex; flex-direction: column; gap: 4px; }
 .ksqld-field > .ksqld-label { margin: 0; }
-.ksqld-toolbar-controls .ksqld-enabled-label { padding-bottom: 6px; }
+.ksqld-toolbar-controls .ksqld-enabled-label { padding-bottom: 8px; } /* 36px セレクトに対して光学的に中央 */
 .ksqld-subtitle { font-size: 16px; margin: 0 0 12px; padding-left: 8px; border-left: 4px solid #3498db; }
 /* 各セクションを区切り線で分離 */
 .ksqld-section { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #e3e3e3; }
@@ -59,6 +59,11 @@
 .ksqld-config .kintoneplugin-input-text { height: 36px; font-size: 13px; color: #333; }
 .ksqld-config .kintoneplugin-select { height: 36px; margin-right: 0; }
 .ksqld-config .kintoneplugin-select select { height: 36px; min-width: 0; font-size: 13px; }
+/* ラッパーを flex 化して行ボックスのベースライン下余白を除去
+   （inline-block のままだと下に数px の余白が付き、隣の input と底辺がズレる） */
+.ksqld-config .kintoneplugin-select-outer { display: flex; }
+/* 内側 select の width:144%（ネイティブ矢印隠し）のはみ出しで「…」が出るのを防ぐ */
+.ksqld-config .kintoneplugin-select { text-overflow: clip; }
 /* SQL 欄はドラッグで小さくしすぎないよう最小高さを確保 */
 .ksqld-pane-sql { min-height: 120px; }
 
