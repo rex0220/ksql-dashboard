@@ -5,7 +5,28 @@
   font-family: "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
   color: #2d2d2d;
 }
-.ksqld-title { font-size: 20px; margin: 8px 0 16px; }
+.ksqld-title { font-size: 20px; margin: 0; }
+
+/* 上部固定ツールバー（保存・キャンセル・運用反映＋対象ビュー選択を常時表示） */
+.ksqld-toolbar {
+  position: sticky;
+  top: 48px; /* kintone のヘッダーバー（約48px）と重ならないように下げる */
+  z-index: 20;
+  background: #fff;
+  border-bottom: 1px solid #e3e3e3;
+  padding: 10px 0;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ksqld-toolbar-top { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.ksqld-toolbar-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ksqld-toolbar-deploy { font-size: 13px; }
+.ksqld-toolbar-controls { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.ksqld-field { display: flex; flex-direction: column; gap: 4px; }
+.ksqld-field > .ksqld-label { margin: 0; }
+.ksqld-toolbar-controls .ksqld-enabled-label { padding-bottom: 6px; }
 .ksqld-subtitle { font-size: 16px; margin: 8px 0; }
 .ksqld-section { margin-bottom: 24px; }
 .ksqld-label { display: block; font-weight: bold; font-size: 13px; margin: 8px 0 4px; }
@@ -51,15 +72,12 @@
   white-space: pre-wrap; word-break: break-word; max-height: 120px; overflow: auto;
 }
 
-.ksqld-view-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .ksqld-enabled-label { font-size: 13px; }
 .ksqld-editor.ksqld-dim { opacity: 0.45; pointer-events: none; }
 
-.ksqld-deploy-row { margin: 16px 0 4px; }
 .ksqld-deploy { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
 .ksqld-deploy input { width: 16px; height: 16px; }
 
-.ksqld-actions { display: flex; align-items: center; gap: 12px; margin: 8px 0 40px; }
 .ksqld-btn {
   border: 1px solid #c9c9c9; background: #fff; color: #333;
   border-radius: 4px; padding: 8px 20px; font-size: 13px; cursor: pointer;

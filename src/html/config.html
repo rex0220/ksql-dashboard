@@ -1,28 +1,41 @@
 <div id="ksqld-config" class="ksqld-config">
-  <h2 class="ksqld-title">kSQL Dashboard 設定</h2>
+  <div class="ksqld-toolbar">
+    <div class="ksqld-toolbar-top">
+      <h2 class="ksqld-title">kSQL Dashboard 設定</h2>
+      <div class="ksqld-toolbar-actions">
+        <button id="ksqld-save" class="ksqld-btn ksqld-btn-primary" type="button">保存</button>
+        <button id="ksqld-cancel" class="ksqld-btn" type="button">キャンセル</button>
+        <label class="ksqld-deploy ksqld-toolbar-deploy" title="オフの場合は設定の保存のみ。反映には別途アプリの更新が必要です。">
+          <input type="checkbox" id="ksqld-deploy" />
+          運用環境に反映
+        </label>
+        <span id="ksqld-message" class="ksqld-message" role="status"></span>
+      </div>
+    </div>
 
-  <section class="ksqld-section">
-    <label class="ksqld-label" for="ksqld-view">対象の一覧（ビュー）</label>
-    <div class="ksqld-view-row">
-      <select id="ksqld-view" class="ksqld-select">
-        <option value="__default__">すべての一覧（共通）</option>
-      </select>
+    <div class="ksqld-toolbar-controls">
+      <div class="ksqld-field">
+        <label class="ksqld-label" for="ksqld-view">対象の一覧（ビュー）</label>
+        <select id="ksqld-view" class="ksqld-select">
+          <option value="__default__">すべての一覧（共通）</option>
+        </select>
+      </div>
       <label class="ksqld-deploy ksqld-enabled-label">
         <input type="checkbox" id="ksqld-enabled" />
         <span id="ksqld-enabled-text">この一覧でダッシュボードを表示する</span>
       </label>
+      <div class="ksqld-field" id="ksqld-source-row" hidden>
+        <label class="ksqld-label" for="ksqld-source">表示するダッシュボード</label>
+        <select id="ksqld-source" class="ksqld-select">
+          <option value="common">共通（すべての一覧）</option>
+          <option value="individual">個別（この一覧専用）</option>
+        </select>
+      </div>
     </div>
-    <p class="ksqld-hint">一覧ごとにダッシュボードを設定できます。「すべての一覧（共通）」は、個別設定の無い一覧に共通で表示されます。カスタマイズ一覧も選べます。</p>
-  </section>
+  </div>
 
-  <section id="ksqld-source-row" class="ksqld-section" hidden>
-    <label class="ksqld-label" for="ksqld-source">表示するダッシュボード</label>
-    <select id="ksqld-source" class="ksqld-select">
-      <option value="common">共通（すべての一覧）</option>
-      <option value="individual">個別（この一覧専用）</option>
-    </select>
-    <p id="ksqld-common-note" class="ksqld-hint" hidden>この一覧では共通ダッシュボードを表示します。内容は「すべての一覧（共通）」で編集してください。</p>
-  </section>
+  <p class="ksqld-hint">一覧ごとにダッシュボードを設定できます。「すべての一覧（共通）」は、個別設定の無い一覧に共通で表示されます。カスタマイズ一覧も選べます。</p>
+  <p id="ksqld-common-note" class="ksqld-hint" hidden>この一覧では共通ダッシュボードを表示します。内容は「すべての一覧（共通）」で編集してください。</p>
 
   <div id="ksqld-editor" class="ksqld-editor">
     <section class="ksqld-section">
@@ -40,20 +53,6 @@
       <h3 class="ksqld-subtitle">ペイン一覧</h3>
       <div id="ksqld-panes" class="ksqld-panes"><!-- config.js が生成 --></div>
     </section>
-  </div>
-
-  <div class="ksqld-deploy-row">
-    <label class="ksqld-deploy">
-      <input type="checkbox" id="ksqld-deploy" />
-      運用環境に反映（保存後に「アプリを更新」まで自動実行）
-    </label>
-    <p class="ksqld-hint">オフの場合は設定の保存のみ。反映には別途アプリの更新が必要です。</p>
-  </div>
-
-  <div class="ksqld-actions">
-    <button id="ksqld-save" class="ksqld-btn ksqld-btn-primary" type="button">保存</button>
-    <button id="ksqld-cancel" class="ksqld-btn" type="button">キャンセル</button>
-    <span id="ksqld-message" class="ksqld-message" role="status"></span>
   </div>
 </div>
 
