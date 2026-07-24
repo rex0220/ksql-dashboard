@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "description": "kintone プラグイン: kSQL(read-only) の結果を 1〜4 分割ダッシュボードで表示する。",
+  "license": "MIT",
+  "author": "rex0220",
   "scripts": {
     "package": "node scripts/package.js",
     "package:upload": "node scripts/package.js --upload",

@@ -146,3 +146,12 @@ KINTONE_PASSWORD=your-password
 - グラフは依存を持たない**インライン SVG 棒グラフ**（外部ライブラリ不要・CSP 安全）。本格的な可視化は用途に応じて差し替え。
 - kSQL の値はすべて**文字列**で返る（B66 Phase1 仕様）。数値グラフは値列を `Number()` で解釈する。
 - 検索打ち切り（10万件）等はエンジン側で `SEARCH_ABORTED` の hard error になる（部分表示しない）。
+
+## ライセンス
+
+[MIT License](LICENSE)（Copyright (c) 2026 rex0220）
+
+同梱している第三者ファイル:
+
+- `src/css/51-modern-default.css` — kintone プラグイン用スタイルシート（Copyright (c) 2014 Cybozu, [MIT License](https://cybozu.dev/ja/kintone/sdk/library/plugin-stylesheet-guide/)）。ファイル内の著作権表記を保持したまま同梱。
+- `src/js/ksql-engine.umd.js` — kSQL エンジン UMD ビルド（[@rex0220/kintone-sql-tools](https://github.com/rex0220/kintone-sql-tools) より。同リポジトリのライセンスに従う）。

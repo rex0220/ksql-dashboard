@@ -25,6 +25,7 @@ kSQL Dashboard は、kintone のレコード一覧画面に **kSQL（read-only �
 - 値はすべて文字列で返るため、数値は**3桁区切り＋右詰め**で見やすく整形します。
 
 GitHub: https://github.com/rex0220/kintone-sql-tools
+ライセンス: MIT
 
 ---
 
