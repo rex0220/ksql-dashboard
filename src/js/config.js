@@ -48,6 +48,12 @@
   var $toolsMsg = document.getElementById("ksqld-tools-msg");
   var $copyTarget = document.getElementById("ksqld-copy-target");
   var $copyViewBtn = document.getElementById("ksqld-copy-view");
+  var $download = document.getElementById("ksqld-download");
+  var $uploadBtn = document.getElementById("ksqld-upload");
+  var $importFile = document.getElementById("ksqld-import-file");
+
+  var appName = "";       // ダウンロードのメタ情報用（取得失敗時は空）
+  var lastViewList = [];  // 直近取得のビュー一覧（インポート後の再描画用）
 
   // --- 設定の読込と正規化（旧形式 { split, panes } からの移行を含む）---------
   function normalizeSplit(s) {
@@ -427,6 +433,91 @@
     toolsMessage("「" + keyLabel(currentKey) + "」の設定を「" + keyLabel(targetKey) + "」へ複写しました。", "ok");
   }
 
+  // --- 設定のダウンロード／アップロード -----------------------------------
+  function pad2(n) { return (n < 10 ? "0" : "") + n; }
+  function nowString() {
+    var d = new Date();
+    return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()) +
+      " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes()) + ":" + pad2(d.getSeconds());
+  }
+  function nowStamp() {
+    var d = new Date();
+    return "" + d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()) +
+      "-" + pad2(d.getHours()) + pad2(d.getMinutes()) + pad2(d.getSeconds());
+  }
+
+  // アプリ名を取得（ダウンロードのメタ情報用・失敗しても無視）
+  function fetchAppName(appId) {
+    return kintoneApi("/k/v1/app.json", "GET", { id: appId })
+      .then(function (r) { appName = (r && r.name) || ""; })
+      .catch(function () { /* 取得不可でも続行 */ });
+  }
+
+  // 現在の設定を JSON ファイルとしてダウンロード
+  function downloadConfig() {
+    stashEditor();            // 画面の編集内容を反映
+    pruneUntouchedEmpty();    // 保存時と同じ状態に整理
+    var knownViews = Object.keys(viewsById);
+    if (!knownViews.length) { knownViews = config.knownViews || []; }
+    var appId = getAppId();
+    var payload = {
+      date: nowString(),
+      pluginName: "kSQL Dashboard",
+      pluginId: PLUGIN_ID,
+      appId: appId,
+      appName: appName,
+      config: { dashboards: dashboards, deployOnSave: $deploy.checked, knownViews: knownViews }
+    };
+    var filename = "ksql-dashboard-app" + (appId || "x") + "-" + nowStamp() + ".json";
+    var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    toolsMessage("設定をダウンロードしました: " + filename, "ok");
+  }
+
+  // アップロードした JSON で現在の設定を置き換える（保存はしない）
+  function applyImported(raw) {
+    // メタ情報でラップされていれば config を取り出す。素の設定でも受け付ける。
+    var body = raw && raw.config && typeof raw.config === "object" ? raw.config : raw;
+    var norm = normalizeConfig(body);
+    if (!norm.dashboards || !Object.keys(norm.dashboards).length) {
+      throw new Error("ダッシュボード設定が見つかりません。");
+    }
+    dashboards = norm.dashboards;
+    ensureDash(DEFAULT_KEY);
+    config.knownViews = norm.knownViews;
+    config.deployOnSave = norm.deployOnSave;
+    $deploy.checked = norm.deployOnSave === true;
+    // 読み込んだエントリは意図的な設定として保持（touched 扱い）
+    touched = {};
+    Object.keys(dashboards).forEach(function (k) { touched[k] = true; });
+    currentKey = DEFAULT_KEY;
+    populateViews(lastViewList); // 不明ビューも選択肢に出す
+    $view.value = currentKey;
+    loadEditor(ensureDash(currentKey));
+    refreshCopyTarget();
+  }
+
+  function onImportFile() {
+    var f = $importFile.files && $importFile.files[0];
+    $importFile.value = ""; // 同じファイルを再選択できるように
+    if (!f) { return; }
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        applyImported(JSON.parse(reader.result));
+        toolsMessage("設定を読み込みました。内容を確認して「保存」してください。", "ok");
+      } catch (e) {
+        toolsMessage("読み込みに失敗しました: " + (e && e.message ? e.message : e), "error");
+      }
+    };
+    reader.onerror = function () { toolsMessage("ファイルの読み込みに失敗しました。", "error"); };
+    reader.readAsText(f);
+  }
+
   // --- 複写・入れ替えツール（歯車ダイアログ）------------------------------
   function toolsMessage(text, kind) {
     $toolsMsg.textContent = text;
@@ -589,14 +680,22 @@
   $opCopy.addEventListener("click", function () { paneOp("copy"); });
   $opSwap.addEventListener("click", function () { paneOp("swap"); });
   $copyViewBtn.addEventListener("click", function () { copyViewTo($copyTarget.value); });
+  // 設定のダウンロード／アップロード
+  $download.addEventListener("click", downloadConfig);
+  $uploadBtn.addEventListener("click", function () { $importFile.click(); });
+  $importFile.addEventListener("change", onImportFile);
   refreshCopyTarget();
 
-  // ビュー一覧を取得してセレクトへ反映（失敗しても既定で続行）
+  // ビュー一覧・アプリ名を取得（失敗しても既定で続行）
   var appIdForViews = getAppId();
   if (appIdForViews) {
-    fetchViews(appIdForViews).then(populateViews).catch(function (e) {
+    fetchViews(appIdForViews).then(function (list) {
+      lastViewList = list;
+      populateViews(list);
+    }).catch(function (e) {
       console.log("kSQL Dashboard 設定: ビュー一覧の取得に失敗しました:", apiErrorMessage(e));
     });
+    fetchAppName(appIdForViews);
   }
 
   $save.addEventListener("click", function () {

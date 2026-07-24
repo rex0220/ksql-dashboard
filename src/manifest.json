@@ -1,6 +1,6 @@
 {
   "manifest_version": 1,
-  "version": 27,
+  "version": 28,
   "type": "APP",
   "name": {
     "ja": "kSQL Dashboard",
