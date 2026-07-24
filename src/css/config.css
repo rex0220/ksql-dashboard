@@ -40,7 +40,7 @@
 /* SQL 欄（標準スタイルシートに textarea 部品が無いため自前。配色は標準に合わせる）
    max-width で列幅を超えて広がらないように（区切り線を越えてハンドルが掴めなくなるのを防ぐ） */
 .ksqld-textarea {
-  border: 1px solid #e3e7e8;
+  border: 1px solid #b0b8bd;
   padding: 6px 8px;
   font-size: 13px;
   box-sizing: border-box;
@@ -56,8 +56,15 @@
   min-width: 0; height: 36px; line-height: 34px; padding: 0 20px; font-size: 13px;
 }
 .ksqld-config .ksqld-btn-sub { height: 30px; line-height: 28px; padding: 0 12px; font-size: 12px; }
-.ksqld-config .kintoneplugin-input-text { height: 36px; font-size: 13px; color: #333; }
-.ksqld-config .kintoneplugin-select { height: 36px; margin-right: 0; }
+/* 標準の枠線 #e3e7e8 は白背景でほぼ見えないため濃いグレーへ。
+   input の内側シャドウ（白モヤ）も外して欄の境界をはっきりさせる */
+.ksqld-config .kintoneplugin-input-text {
+  height: 36px; font-size: 13px; color: #333;
+  border-color: #b0b8bd; box-shadow: none;
+}
+.ksqld-config .kintoneplugin-select { height: 36px; margin-right: 0; border-color: #b0b8bd; }
+.ksqld-config .kintoneplugin-button-normal,
+.ksqld-config .kintoneplugin-button-dialog-cancel { border-color: #b0b8bd; }
 .ksqld-config .kintoneplugin-select select { height: 36px; min-width: 0; font-size: 13px; }
 /* ラッパーを flex 化して行ボックスのベースライン下余白を除去
    （inline-block のままだと下に数px の余白が付き、隣の input と底辺がズレる） */
