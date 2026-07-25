@@ -13,7 +13,7 @@ kSQL Dashboard は、kintone のレコード一覧画面に **kSQL（read-only �
 > **📌 本記事の位置づけ**
 > kSQL 本体（アプリを SQL ライクに操作するプラグイン）については別記事を参照してください。本記事はその **エンジンを使った可視化プラグイン** の紹介です。
 
-![2026-07-25_01h43_56.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/100572/d8349afb-d342-4f35-9cc9-4d0b587f8638.png)
+![2026-07-25_10h18_50.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/100572/5f81bc60-b9d9-46c7-9e80-3f9256836863.png)
 
 ### 🔥 主な特徴
 
