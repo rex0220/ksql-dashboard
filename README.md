@@ -23,7 +23,7 @@ kintone アプリのレコード一覧画面に、**kSQL で取得したデー�
 
 ```js
 // UMD をプラグインに同梱し、バージョンを明示して取得
-var engine = window.ksql.get("3.21.0");
+var engine = window.ksql.get("3.25.0");
 var client = engine.createReadonlyKintoneClient();
 var result = await engine.runQuery(sql, { client: client, maxRecords: 500 });
 // result.columns: [{ name, valueType:"string" }]
@@ -32,7 +32,7 @@ var result = await engine.runQuery(sql, { client: client, maxRecords: 500 });
 
 ### エンジンの同梱
 
-`@rex0220/kintone-sql-tools` の **UMD ビルド v3.21.0** を `src/js/ksql-engine.umd.js` として同梱済み。
+`@rex0220/kintone-sql-tools` の **UMD ビルド v3.25.0** を `src/js/ksql-engine.umd.js` として同梱済み。
 `src/manifest.json` は `js/ksql-engine.umd.js` → `js/desktop.js`（config も同順）で読み込む（パスは manifest からの相対）。
 
 更新する場合は親リポジトリの `dist-engine/ksql-engine.umd.js` を再コピーし、**版を上げたときは
@@ -51,7 +51,7 @@ ksql-dashboard/
 │   ├── html/config.html    設定画面
 │   ├── js/config.js        設定画面ロジック
 │   ├── js/desktop.js       ダッシュボード描画
-│   ├── js/ksql-engine.umd.js  kSQL エンジン UMD v3.21.0（同梱）
+│   ├── js/ksql-engine.umd.js  kSQL エンジン UMD v3.25.0（同梱）
 │   ├── css/config.css
 │   ├── css/desktop.css
 │   └── image/icon.png      (48x48 プレースホルダ・要差し替え)
