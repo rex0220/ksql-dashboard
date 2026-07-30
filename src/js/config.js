@@ -18,7 +18,7 @@
   var DEFAULT_KEY = "__default__"; // 既定ダッシュボードのキー
   var DEFAULT_VIEW_ID = "20";      // kintone 既定の「(すべて)」ビューの固定 viewId
   // desktop.js と同じく UMD レジストリから明示バージョンで取得する
-  var KSQL_VERSION = "3.25.0";
+  var KSQL_VERSION = "3.35.0";
   // SHOW/DESCRIBE 検証時の取得上限（メタデータなので小さくてよい）
   var VALIDATE_MAX_RECORDS = 100;
 
@@ -195,7 +195,9 @@
     setValidateResult($status, $plan, "検証中…", "note");
     var client = engine.createReadonlyKintoneClient();
 
-    // SELECT/WITH/UNION は explain（データ取得なし）、SHOW/DESCRIBE は軽量 runQuery で検証
+    // SELECT/WITH/UNION と複数文（バッチ）は explain（データ取得なし）で検証。
+    // explainQuery は v3.35.0（B89）で複文にも対応。SHOW/DESCRIBE の単文のみ
+    // explainQuery 非対応のため軽量 runQuery で検証する。
     var run = isExplainable(sql)
       ? engine.explainQuery(sql, { client: client }).then(function (plan) {
           return {

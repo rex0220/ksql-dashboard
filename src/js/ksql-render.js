@@ -24,6 +24,30 @@
     return typeof s === "string" && /^[+-]?\d+(\.\d+)?$/.test(s.trim());
   }
 
+  // ペインの SQL を実行し、描画用の結果（{ columns, rows, ... }）に正規化して返す。
+  // runBatch は単文・複数文の両方に対応するため、常に runBatch を使う。
+  // 複数文（CREATE TEMP TABLE / SET / DECLARE 等を含むバッチ）では、行を返す
+  // 最後の文（＝最終 SELECT）の結果を表示する。単文はその 1 文の結果になる。
+  function runPaneQuery(engine, pane, client, maxRecords) {
+    return engine.runBatch(pane.sql, { client: client, maxRecords: maxRecords })
+      .then(function (batch) {
+        var results = (batch && batch.results) || [];
+        if (results.length === 0) {
+          // 行を返す文（SELECT 等）が無いバッチ。表示すべき結果セットが無い。
+          return {
+            columns: [], rows: [], rowCount: 0,
+            warnings: (batch && batch.warnings) || [],
+            batchEmpty: true,
+            batchStatementCount: batch ? batch.statementCount : 0
+          };
+        }
+        var last = results[results.length - 1];
+        // 結果セットが複数あるときは、最後の結果を表示している旨を伝える。
+        last.batchResultCount = results.length;
+        return last;
+      });
+  }
+
   // 3桁区切りを付与（Number 化せず文字列操作＝桁あふれ・大きな ID でも精度を保つ）
   function formatNumber(s) {
     var m = /^([+-]?)(\d+)(\.\d+)?$/.exec(String(s).trim());
@@ -124,16 +148,33 @@
       return;
     }
     var maxRecords = (typeof pane.maxRecords === "number" && pane.maxRecords > 0) ? pane.maxRecords : DEFAULT_MAX_RECORDS;
-    engine.runQuery(pane.sql, { client: client, maxRecords: maxRecords })
+    runPaneQuery(engine, pane, client, maxRecords)
       .then(function (result) {
         tileBody.innerHTML = "";
+        if (result.batchEmpty) {
+          tileBody.appendChild(el("div", "ksqld-note",
+            "結果を返す文がありません（" + result.batchStatementCount + " 文を実行）。"));
+          return;
+        }
+        // バッチで複数の結果セットがあるときは、最後の結果を表示している旨を明示。
+        if (result.batchResultCount > 1) {
+          tileBody.appendChild(el("div", "ksqld-note",
+            "バッチ内 " + result.batchResultCount + " 件の結果のうち、最後の結果を表示しています。"));
+        }
         if (pane.display === "chart") { renderChart(tileBody, result, pane); }
         else { renderTable(tileBody, result); }
       })
       .catch(function (err) {
         tileBody.innerHTML = "";
         var code = (err && err.code) ? "[" + err.code + "] " : "";
-        tileBody.appendChild(el("div", "ksqld-error", code + (err && err.message ? err.message : "実行エラー")));
+        // バッチはどの文で失敗したかを示す（0 始まりの index を 1 始まりで表示）。
+        var where = "";
+        if (err && typeof err.statementIndex === "number") {
+          where = "（" + (err.statementIndex + 1) + " 文目" +
+            (err.statementType ? "・" + err.statementType : "") + "）";
+        }
+        tileBody.appendChild(el("div", "ksqld-error",
+          code + (err && err.message ? err.message : "実行エラー") + where));
       });
   }
 
