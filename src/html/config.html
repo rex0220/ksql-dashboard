@@ -185,6 +185,7 @@
         <label class="ksqld-label">SQL</label>
         <textarea class="ksqld-textarea ksqld-pane-sql" rows="8"
           placeholder="SELECT 担当, COUNT(*) AS 件数 FROM APP100 GROUP BY 担当"></textarea>
+        <p class="ksqld-hint">複数の SQL（<code>;</code> 区切り。CREATE TEMP TABLE / SET / DECLARE 等を含むバッチ）も実行できます。表示は最後に行を返す文（＝最終 SELECT）の結果です。</p>
         <div class="ksqld-pane-validate">
           <button type="button" class="kintoneplugin-button-normal ksqld-btn-sub ksqld-validate">検証</button>
           <span class="ksqld-validate-result" role="status"></span>

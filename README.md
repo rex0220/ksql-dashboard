@@ -10,12 +10,13 @@ kintone アプリのレコード一覧画面に、**kSQL で取得したデー�
   - 画面分割数を **1 / 2 / 3 / 4** から選択
   - 分割数に応じて表示される**ペイン一覧**（＝選択したカスタマイズ一覧）に、ペインごとの設定
     - タイトル
-    - **SQL 文**（kSQL の `SELECT` / `WITH` / `UNION` …）
+    - **SQL 文**（kSQL の `SELECT` / `WITH` / `UNION` …）。**複数の SQL（`;` 区切りのバッチ）も可**
     - **表示方法**（表 / 棒グラフ）
     - グラフ時のラベル列・値列
 - **ダッシュボード表示**（レコード一覧画面）
   - 設定した分割レイアウトでペインを配置（1=単一 / 2=横2 / 3=上2下1 / 4=2×2）
   - ペインごとに SQL を実行し、表またはグラフで描画
+  - **バッチ（複数 SQL）**: `CREATE TEMP TABLE` / `SET` / `DECLARE` などを含む複数文を実行できる（`runBatch`）。表示は最後に行を返す文（＝最終 SELECT）の結果
 
 ## kSQL エンジン・ライブラリ（B66）との連携
 
@@ -23,7 +24,7 @@ kintone アプリのレコード一覧画面に、**kSQL で取得したデー�
 
 ```js
 // UMD をプラグインに同梱し、バージョンを明示して取得
-var engine = window.ksql.get("3.25.0");
+var engine = window.ksql.get("3.35.0");
 var client = engine.createReadonlyKintoneClient();
 var result = await engine.runQuery(sql, { client: client, maxRecords: 500 });
 // result.columns: [{ name, valueType:"string" }]
@@ -32,7 +33,7 @@ var result = await engine.runQuery(sql, { client: client, maxRecords: 500 });
 
 ### エンジンの同梱
 
-`@rex0220/kintone-sql-tools` の **UMD ビルド v3.25.0** を `src/js/ksql-engine.umd.js` として同梱済み。
+`@rex0220/kintone-sql-tools` の **UMD ビルド v3.35.0** を `src/js/ksql-engine.umd.js` として同梱済み。
 `src/manifest.json` は `js/ksql-engine.umd.js` → `js/desktop.js`（config も同順）で読み込む（パスは manifest からの相対）。
 
 更新する場合は親リポジトリの `dist-engine/ksql-engine.umd.js` を再コピーし、**版を上げたときは
@@ -51,7 +52,7 @@ ksql-dashboard/
 │   ├── html/config.html    設定画面
 │   ├── js/config.js        設定画面ロジック
 │   ├── js/desktop.js       ダッシュボード描画
-│   ├── js/ksql-engine.umd.js  kSQL エンジン UMD v3.25.0（同梱）
+│   ├── js/ksql-engine.umd.js  kSQL エンジン UMD v3.35.0（同梱）
 │   ├── css/config.css
 │   ├── css/desktop.css
 │   └── image/icon.png      (48x48 プレースホルダ・要差し替え)

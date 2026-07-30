@@ -2,6 +2,43 @@
 
 kSQL Dashboard（kintone プラグイン）の変更履歴。同梱する kSQL エンジン（`@rex0220/kintone-sql-tools`）のバージョンも併記する。
 
+## v1.2.0（2026-07-30）
+
+### 追加（バッチ処理・複数 SQL 対応）
+
+- **各ペインで複数の SQL（バッチ）を実行できるようになった。** 実行はエンジンの `runBatch()` に一本化した（`runBatch` は単文・複数文の両方に対応）。`;` 区切りで `CREATE TEMP TABLE` / `SET` / `DECLARE` などを組み合わせて、一時テーブルの構築 → 集計 → 表示までを 1 ペインで完結できる。
+  ```sql
+  CREATE TEMP TABLE #g AS SELECT 担当, SUM(売上) AS 売上 FROM APP100 GROUP BY 担当;
+  SET @total = (SELECT SUM(売上) FROM #g);
+  SELECT 担当, 売上, ROUND(売上 * 100 / @total, 1) AS 構成比 FROM #g ORDER BY 売上 DESC
+  ```
+- **表示は「最後に行を返す文」（＝最終 SELECT）の結果**。行を返す文が無いバッチは「結果を返す文がありません」と表示する。結果セットが複数あるときは最後の結果を表示する旨を添える。
+- バッチは fail-closed（1 文でも失敗すると全体がエラー）。失敗時はエラーに**何文目・文型**を併記する。
+- 設定画面の「検証」は複数文にも対応（`explainQuery` のバッチ対応・データ取得なし）。SQL 欄にバッチ対応のヒントを追記。
+
+### 変更
+
+- **同梱 kSQL エンジンを v3.25.0 → v3.35.0 に更新**（`src/js/ksql-engine.umd.js` を親リポジトリ `dist-engine/ksql-engine.umd.js` から再コピー）。
+- エンジンの UMD レジストリキーに合わせ、`src/js/desktop.js` / `src/js/config.js` の `KSQL_VERSION` を `"3.35.0"` に更新（`window.ksql.get("3.35.0")`）。
+- ドキュメント（README.md / CLAUDE.md）のバージョン表記を v3.35.0 に更新。
+
+> **⚠ エンジン更新に伴う破壊的変更に注意（ダッシュボード SQL への影響）**
+> v3.26.0〜v3.35.0 には、従来 silent に 0 件・部分結果になっていた形を**取得前エラーにする**変更が含まれます。既存ダッシュボードの SQL がエンジン更新後にエラーになる場合があります。
+> - 外部結合で保持されない側が検索打ち切りに達した場合の fail-closed 化（v3.27.0 / v3.34.0）。
+> - 実体化ソース（一時テーブル・CTE）の存在しない列参照を fail-closed 化（v3.30.0）。
+>
+> （v3.25.0 の `TODAY()` / `NOW()` / `LOGINUSER()`・型不一致演算子の破壊的変更は v1.1.0 で導入済み。v1.0.0 から直接更新する場合は下の v1.1.0 の注意も参照してください。）
+> 各ペインの SQL を見直してください（設定画面の「検証」で事前確認できます）。
+
+### 同梱エンジンの主な変更（v3.26.0 → v3.35.0）
+
+- **v3.29.0（B68）**: read-only engine ライブラリに **`runBatch(sql, options)` を追加**。`CREATE` / `DROP TEMP TABLE`・`SET` / `DECLARE`・`ASSERT`・`EXPLAIN` を含む複文を実行できる（本プラグインのバッチ対応の基盤）。
+- **v3.31.0（B89/B90）**: `explainQuery` が複文（バッチ）を受理・受理集合を `runBatch` と統一。SELECT 算術式でバッチ変数（`@total` など）を直接使えるように。バッチ静的検証エラーに `statementIndex` / `statementType` を付与。
+- **v3.27.0 / v3.30.0 / v3.34.0**: 【破壊的変更】外部結合の検索打ち切り、実体化ソースの不存在列参照、保持されない側の打ち切りをそれぞれ fail-closed 化。
+- **v3.32.0（B95/B94）**: 取得上限の打ち切りを `metrics` へ構造化。`SELECT COUNT(*)` を `totalCount` で単発取得。
+
+同梱エンジンの詳細は親リポジトリの [CHANGELOG](https://github.com/rex0220/kintone-sql-tools/blob/main/CHANGELOG.md) を参照。
+
 ## v1.1.0（2026-07-27）
 
 ### 変更
