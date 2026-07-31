@@ -2,6 +2,22 @@
 
 kSQL Dashboard（kintone プラグイン）の変更履歴。同梱する kSQL エンジン（`@rex0220/kintone-sql-tools`）のバージョンも併記する。
 
+## v1.3.0（2026-07-31）
+
+### 変更
+
+- **同梱 kSQL エンジンを v3.35.0 → v3.36.0 に更新**（`src/js/ksql-engine.umd.js` を親リポジトリ `dist-engine/ksql-engine.umd.js` から再コピー）。
+- エンジンの UMD レジストリキーに合わせ、`src/js/desktop.js` / `src/js/config.js` の `KSQL_VERSION` を `"3.36.0"` に更新（`window.ksql.get("3.36.0")`）。
+- ドキュメント（README.md / CLAUDE.md）のバージョン表記を v3.36.0 に更新。
+
+破壊的変更なし・純加法の更新。プラグインの SQL 方言・設定データ構造・UI に変更はない。
+
+### 同梱エンジンの主な変更（v3.36.0）
+
+- **v3.36.0（B105）**: `UNION` / `UNION ALL` の各枝の `SELECT COUNT(*)` が、単体と同じく `totalCount` の単発 GET になった（リテラル列との併用も対象）。従来は枝内だと FULL_SCAN に落ち、既定 `maxRecords` を超えるアプリでエラー停止していた件数一覧の定型が動くようになる。失われる正しい結果はない（純加法）。
+
+同梱エンジンの詳細は親リポジトリの [CHANGELOG](https://github.com/rex0220/kintone-sql-tools/blob/main/CHANGELOG.md) を参照。
+
 ## v1.2.0（2026-07-30）
 
 ### 追加（バッチ処理・複数 SQL 対応）
