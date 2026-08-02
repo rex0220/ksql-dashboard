@@ -2,6 +2,30 @@
 
 kSQL Dashboard（kintone プラグイン）の変更履歴。同梱する kSQL エンジン（`@rex0220/kintone-sql-tools`）のバージョンも併記する。
 
+## v1.4.0（2026-08-02）
+
+### 修正（列の英字小文字表示問題）
+
+- **表の見出しが、SQL に書いた別名の表記どおりに表示されるようにした。** SELECT 別名の英字は engine の parse 時に小文字へ正規化されるため（例: `AS Count` → 結果列名 `count`）、従来は表の見出しが小文字で表示されていた。v3.38.0 で追加された `QueryColumn.displayName`（書かれた別名の表記）を見出しに優先使用する（`displayName` が無い列は従来どおり `name`）。
+- **グラフのラベル列・値列の指定を、大文字小文字を無視して解決するようにした。** 行キーは小文字化されるため、利用者が書いたとおりの表記（英大文字混じり）で指定しても、`name` / `displayName` に対して完全一致 → 大小無視の順で実キーへ対応付ける。日本語列名は従来どおり。
+- 設定画面の「検証」の列一覧も `displayName` 優先で表示する。
+- 結果行のキー・`columns[].name`・照合（重複検査・`ORDER BY` / `HAVING`・`UNION` の列合わせ）は engine 側で不変のため、既存の設定・SQL の挙動は変わらない（表示のみの修正）。
+
+### 変更
+
+- **同梱 kSQL エンジンを v3.36.0 → v3.38.0 に更新**（`src/js/ksql-engine.umd.js` を親リポジトリ `dist-engine/ksql-engine.umd.js` から再コピー）。
+- エンジンの UMD レジストリキーに合わせ、`src/js/desktop.js` / `src/js/config.js` の `KSQL_VERSION` を `"3.38.0"` に更新（`window.ksql.get("3.38.0")`）。
+- ドキュメント（README.md / CLAUDE.md）のバージョン表記を v3.38.0 に更新。
+
+破壊的変更なし・純加法の更新。
+
+### 同梱エンジンの主な変更（v3.37.0 → v3.38.0）
+
+- **v3.38.0（B110）**: engine ライブラリの `QueryColumn` に `displayName?`（SQL に書かれた別名の表記・バッククォートは剥がした中身）を純加法で追加（本修正が使用）。結果行キー・`columns[].name` は小文字のまま不変。
+- **v3.37.0（B107/B108）**: 論理アプリ名 `LAPP_<NAME>` の日本語対応。文として書いた `EXPLAIN` の内部 ID 露出を修正。
+
+同梱エンジンの詳細は親リポジトリの [CHANGELOG](https://github.com/rex0220/kintone-sql-tools/blob/main/CHANGELOG.md) を参照。
+
 ## v1.3.0（2026-07-31）
 
 ### 変更

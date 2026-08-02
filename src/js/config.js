@@ -18,7 +18,7 @@
   var DEFAULT_KEY = "__default__"; // 既定ダッシュボードのキー
   var DEFAULT_VIEW_ID = "20";      // kintone 既定の「(すべて)」ビューの固定 viewId
   // desktop.js と同じく UMD レジストリから明示バージョンで取得する
-  var KSQL_VERSION = "3.36.0";
+  var KSQL_VERSION = "3.38.0";
   // SHOW/DESCRIBE 検証時の取得上限（メタデータなので小さくてよい）
   var VALIDATE_MAX_RECORDS = 100;
 
@@ -208,7 +208,8 @@
           };
         })
       : engine.runQuery(sql, { client: client, maxRecords: VALIDATE_MAX_RECORDS }).then(function (result) {
-          var cols = (result && result.columns || []).map(function (c) { return c.name; });
+          // 見出しに使う表記（displayName・v3.38.0〜）を優先して表示する。
+          var cols = (result && result.columns || []).map(function (c) { return c.displayName || c.name; });
           return {
             ok: "OK: 実行可能な SQL です（" + (result ? result.rowCount : 0) + " 件）。",
             detail: cols.length ? "列: " + cols.join(", ") : "",
