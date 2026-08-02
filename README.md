@@ -24,16 +24,18 @@ kintone アプリのレコード一覧画面に、**kSQL で取得したデー�
 
 ```js
 // UMD をプラグインに同梱し、バージョンを明示して取得
-var engine = window.ksql.get("3.36.0");
+var engine = window.ksql.get("3.38.0");
 var client = engine.createReadonlyKintoneClient();
 var result = await engine.runQuery(sql, { client: client, maxRecords: 500 });
-// result.columns: [{ name, valueType:"string" }]
-// result.rows:    [{ 列名: "値(すべて文字列)" }]
+// result.columns: [{ name, displayName?, valueType:"string" }]
+//   name        … 結果行のキー（SELECT 別名は小文字へ正規化される）
+//   displayName … SQL に書かれた別名の表記（見出し表示用・v3.38.0〜）
+// result.rows:    [{ 列名(=name): "値(すべて文字列)" }]
 ```
 
 ### エンジンの同梱
 
-`@rex0220/kintone-sql-tools` の **UMD ビルド v3.36.0** を `src/js/ksql-engine.umd.js` として同梱済み。
+`@rex0220/kintone-sql-tools` の **UMD ビルド v3.38.0** を `src/js/ksql-engine.umd.js` として同梱済み。
 `src/manifest.json` は `js/ksql-engine.umd.js` → `js/desktop.js`（config も同順）で読み込む（パスは manifest からの相対）。
 
 更新する場合は親リポジトリの `dist-engine/ksql-engine.umd.js` を再コピーし、**版を上げたときは
@@ -52,7 +54,7 @@ ksql-dashboard/
 │   ├── html/config.html    設定画面
 │   ├── js/config.js        設定画面ロジック
 │   ├── js/desktop.js       ダッシュボード描画
-│   ├── js/ksql-engine.umd.js  kSQL エンジン UMD v3.36.0（同梱）
+│   ├── js/ksql-engine.umd.js  kSQL エンジン UMD v3.38.0（同梱）
 │   ├── css/config.css
 │   ├── css/desktop.css
 │   └── image/icon.png      (48x48 プレースホルダ・要差し替え)
@@ -147,6 +149,7 @@ KINTONE_PASSWORD=your-password
 - グラフは依存を持たない**インライン SVG 棒グラフ**（外部ライブラリ不要・CSP 安全）。本格的な可視化は用途に応じて差し替え。
 - kSQL の値はすべて**文字列**で返る（B66 Phase1 仕様）。数値グラフは値列を `Number()` で解釈する。
 - 検索打ち切り（10万件）等はエンジン側で `SEARCH_ABORTED` の hard error になる（部分表示しない）。
+- **列名の表記**: SELECT 別名の英字はエンジンで小文字へ正規化される（行キー＝小文字）。表の見出しは `columns[].displayName`（書いたとおりの表記・v3.38.0〜）を優先表示する。グラフのラベル列・値列は、書いたとおりの表記でも小文字でも指定できる（大小無視で解決）。
 
 ## ライセンス
 

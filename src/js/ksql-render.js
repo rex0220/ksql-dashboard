@@ -56,6 +56,31 @@
     return m[1] + intPart + (m[3] || "");
   }
 
+  // 見出しに表示する列名。SELECT 別名は engine で小文字へ正規化されるため、
+  // 書かれた表記を保持する displayName（v3.38.0〜）があればそれを使う。
+  function columnLabel(c) {
+    return (c && c.displayName) ? c.displayName : (c ? c.name : "");
+  }
+
+  // ユーザーが指定した列名（labelColumn / valueColumn）を、結果行の実キー（＝小文字化された
+  // columns[].name）へ解決する。行キーは小文字だが、利用者は書いたとおりの表記
+  // （displayName・英大文字混じり）で指定しがちなので、name / displayName に対して
+  // 完全一致 → 大小無視の順で対応付ける。見つからなければ元の指定を返す（従来動作）。
+  function resolveColumnKey(result, wanted) {
+    if (wanted == null || wanted === "") { return wanted; }
+    var cols = (result && result.columns) || [];
+    var i, c;
+    for (i = 0; i < cols.length; i++) { if (cols[i].name === wanted) { return cols[i].name; } }
+    for (i = 0; i < cols.length; i++) { if (cols[i].displayName === wanted) { return cols[i].name; } }
+    var lw = String(wanted).toLowerCase();
+    for (i = 0; i < cols.length; i++) {
+      c = cols[i];
+      if (String(c.name).toLowerCase() === lw) { return c.name; }
+      if (c.displayName && String(c.displayName).toLowerCase() === lw) { return c.name; }
+    }
+    return wanted;
+  }
+
   // 表描画
   function renderTable(body, result) {
     var cols = result.columns || [];
@@ -65,7 +90,7 @@
     var table = el("table", "ksqld-table");
     var thead = el("thead");
     var trh = el("tr");
-    cols.forEach(function (c) { trh.appendChild(el("th", null, c.name)); });
+    cols.forEach(function (c) { trh.appendChild(el("th", null, columnLabel(c))); });
     thead.appendChild(trh);
     table.appendChild(thead);
 
@@ -89,8 +114,9 @@
   // グラフ描画（依存なしの自前 SVG 風・値はすべて文字列で返るため Number 解釈）
   function renderChart(body, result, pane) {
     var rows = result.rows || [];
-    var labelCol = pane.labelColumn;
-    var valueCol = pane.valueColumn;
+    // 行キーは小文字化されるため、指定列名を実キーへ解決してから参照する。
+    var labelCol = resolveColumnKey(result, pane.labelColumn);
+    var valueCol = resolveColumnKey(result, pane.valueColumn);
     if (rows.length === 0) { body.appendChild(el("div", "ksqld-note", "0 件")); return; }
 
     var data = rows.map(function (r) {
