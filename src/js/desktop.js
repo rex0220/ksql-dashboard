@@ -6,7 +6,7 @@
   "use strict";
 
   // 本プラグインが想定する kSQL エンジンのバージョン（UMD レジストリのキー）
-  var KSQL_VERSION = "3.38.0";
+  var KSQL_VERSION = "3.66.1";
 
   var DEFAULT_KEY = "__default__"; // 既定ダッシュボードのキー
   var refreshTimer = null;         // 自動更新タイマー（重複防止のため単一保持）

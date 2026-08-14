@@ -18,7 +18,7 @@
   var DEFAULT_KEY = "__default__"; // 既定ダッシュボードのキー
   var DEFAULT_VIEW_ID = "20";      // kintone 既定の「(すべて)」ビューの固定 viewId
   // desktop.js と同じく UMD レジストリから明示バージョンで取得する
-  var KSQL_VERSION = "3.38.0";
+  var KSQL_VERSION = "3.66.1";
   // SHOW/DESCRIBE 検証時の取得上限（メタデータなので小さくてよい）
   var VALIDATE_MAX_RECORDS = 100;
 
