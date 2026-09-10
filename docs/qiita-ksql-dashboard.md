@@ -119,12 +119,20 @@ npm run upload          # 生成済みの zip をアップロードのみ（再�
 
 # SQL の書き方（ペインの SQL）
 
-kSQL の **read-only 単文**（`SELECT` / `WITH` / `UNION` / `SHOW APPS` / `DESCRIBE`）が使えます。ダッシュボードでは集計クエリが中心です。
+kSQL の **read-only な SQL**（`SELECT` / `WITH` / `UNION` / `SHOW APPS` / `DESCRIBE`）が使えます。ダッシュボードでは集計クエリが中心です。単文だけでなく、**`;` 区切りの複数文（バッチ）**も1ペインに書けます。
 
 - 対象アプリは `APPxxx`（xxx はアプリ ID）で指定します。
 - 値はすべて文字列で返ります。数値の列は自動で3桁区切り・右詰め表示になります。
+- **複数文（バッチ）**: `CREATE TEMP TABLE` / `SET` / `DECLARE` などを組み合わせて、一時テーブルの構築 → 集計 → 表示までを1ペインで完結できます。**表示されるのは最後に行を返す文（＝最終 `SELECT`）の結果**です。
 
-**検証**ボタンで、保存前に構文チェックできます（`SELECT`/`WITH`/`UNION` は EXPLAIN、`SHOW`/`DESCRIBE` は軽い実行で確認）。
+```sql
+-- 例: 全体比（構成比）をバッチで計算して表示
+CREATE TEMP TABLE #g AS SELECT 担当, SUM(売上) AS 売上 FROM APP100 GROUP BY 担当;
+SET @total = (SELECT SUM(売上) FROM #g);
+SELECT 担当, 売上, ROUND(売上 * 100 / @total, 1) AS 構成比 FROM #g ORDER BY 売上 DESC
+```
+
+**検証**ボタンで、保存前に構文チェックできます（`SELECT`/`WITH`/`UNION`・複数文は EXPLAIN、`SHOW`/`DESCRIBE` は軽い実行で確認）。
 
 > 使える関数（`SUBSTR` / `COUNT` / `SUM` など）や標準 SQL との違い・制限事項は、[kSQL 本体のリポジトリ](https://github.com/rex0220/kintone-sql-tools)を参照してください。kintone の日時は ISO8601 形式の文字列で返るため、`SUBSTR(更新日時, 1, 7)` のような切り出しで年月キーを作れます。
 
