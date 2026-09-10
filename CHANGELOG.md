@@ -2,6 +2,29 @@
 
 kSQL Dashboard（kintone プラグイン）の変更履歴。同梱する kSQL エンジン（`@rex0220/kintone-sql-tools`）のバージョンも併記する。
 
+## v1.6.0（2026-09-10）
+
+### 変更
+
+- **同梱 kSQL エンジンを v3.66.1 → v3.77.0 に更新**（`src/js/ksql-engine.umd.js` を親リポジトリ `dist-engine/ksql-engine.umd.js` から再コピー）。
+- エンジンの UMD レジストリキーに合わせ、`src/js/desktop.js` / `src/js/config.js` の `KSQL_VERSION` を `"3.77.0"` に更新（`window.ksql.get("3.77.0")`）。
+- ドキュメント（README.md / CLAUDE.md）のバージョン表記を v3.77.0 に更新。
+
+プラグイン本体のコード変更はなし（公開 API・`QueryColumn.displayName` の契約は不変）。v3.77.0 の CSV export（B179）は `/flow`・CLI 限定で、MCP・プラグインへの配線は対象外のため本プラグインには影響しない。
+
+> **⚠ エンジン更新に伴う挙動変化に注意（ダッシュボード SQL への影響）**
+> API の破壊的変更はありませんが、read-only の SELECT に効きうる挙動変化があります。設定画面の「検証」で事前確認してください。
+> - **`CURRENT_DATE()` / `CURRENT_TIMESTAMP()` が文単位の固定時刻評価になった**（B169・v3.67.0）。同一文内で複数回評価する形は結果が変わり得ます。
+> - `ASSERT` / `ASSERT WARN` / `EXIT SUCCESS IF` の大小比較が辞書順から正しい比較へ（B171・v3.72.0）。バッチペインでこれらを使う場合のみ。
+
+### 同梱エンジンの主な変更（v3.67.0 → v3.77.0）
+
+- **v3.77.0（B179）**: engine 層に CSV export を追加（名前付きシンク・`/flow` 公開 API・CLI `--export-csv`）。純加法・既定動作不変。**MCP・プラグインへの配線は対象外**。
+- **v3.73.0 / v3.74.0（B173 / B176）**: `UPSERT` を kintone native UPSERT へ／`EXPLAIN UPSERT` の適格性判定を実データで実施（DML 系のため read-only ダッシュボードには無関係）。
+- **v3.67.0（B169）**: `CURRENT_DATE()` / `CURRENT_TIMESTAMP()` を文単位の固定時刻評価へ（上記の挙動変化）。
+
+同梱エンジンの詳細は親リポジトリの [CHANGELOG](https://github.com/rex0220/kintone-sql-tools/blob/main/CHANGELOG.md) を参照。
+
 ## v1.5.0（2026-08-10）
 
 ### 変更
